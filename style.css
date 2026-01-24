@@ -1,0 +1,150 @@
+/* ==========================================
+   SPL BID READINESS C2: MODERN SaaS EDITION
+   ========================================== */
+
+/* 1. GLOBAL UI & MAKE.COM BACKGROUND */
+.stApp {
+    /* Replaces your dark image with a clean, light gradient 'swoosh' */
+    background: radial-gradient(circle at top right, #1a4d87, #9c2dba); 
+    background-size: cover;
+    color: #1e293b !important; /* Professional Slate Grey instead of pure white */
+    font-family: 'Open Sans', sans-serif;
+}
+
+html {
+    zoom: 0.95; /* Increased slightly from 0.9 as light themes feel more spacious */
+}
+
+/* 2. CLEAN LIGHT SIDEBAR */
+[data-testid="stSidebar"] {
+    background-color: #f8fafc !important; /* Light Grey Sidebar */
+    border-right: 1px solid #e2e8f0 !important;
+}
+
+/* Make sidebar text dark for readability */
+[data-testid="stSidebar"] h1, 
+[data-testid="stSidebar"] h2, 
+[data-testid="stSidebar"] h3, 
+[data-testid="stSidebar"] p, 
+[data-testid="stSidebar"] span, 
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] .stCaption {
+    color: #475569 !important;
+    text-shadow: none !important;
+}
+
+/* 3. GRADIENTED BUTTONS (The 'Make' Signature) */
+div.stButton > button, 
+div[data-testid="stForm"] button,
+div[data-testid="stSidebar"] button,
+button[kind="secondary"], 
+button[kind="primary"] {
+    /* Signature Pink-to-Purple Gradient */
+    background: linear-gradient(90deg, #d946ef 0%, #a855f7 100%) !important; 
+    color: #FFFFFF !important; 
+    border: none !important;
+    border-radius: 8px !important; /* Softer, modern corners */
+    font-weight: 600 !important;
+    text-transform: none !important; /* Remove harsh uppercase */
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.2);
+    font-size: 0.9rem !important;
+    white-space: normal !important;
+    height: auto !important;
+}
+
+div.stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.4);
+    filter: brightness(1.1);
+}
+
+/* Ensure button text stays white */
+div.stButton button p {
+    color: #FFFFFF !important;
+}
+
+/* 4. CLEAN CHAT BUBBLES & CARDS */
+[data-testid="stChatMessage"] {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    color: #1e293b !important;
+}
+
+/* Reset text colors for main area to dark grey */
+h1, h2, h3, span, label {
+    color: #ffffff !important;
+    text-shadow: none !important;
+}
+
+/* Reset text colors for main area to dark grey */
+p {
+    color: #1e293b !important;
+    text-shadow: none !important;
+}
+
+/* 5. TAB HEADERS (Modern Minimalism) */
+button[data-baseweb="tab"] p {
+    color: #ffffff !important;
+}
+
+button[aria-selected="true"] {
+    border-bottom-color: #a855f7 !important;
+}
+
+button[aria-selected="true"] p {
+    color: #a855f7 !important;
+    text-shadow: none !important;
+}
+
+/* 6. GAUGE SHADOW */
+iframe[title="streamlit_echarts.st_echarts"] {
+    border: none !important;
+    filter: drop-shadow(0 4px 10px rgba(168, 85, 247, 0.15));
+}
+
+/* 7. CHECKLIST BOXES (Refined) */
+/* Keep your logic for bg_color, but soften the look */
+div[style*="background-color"] {
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* --- LOGIN FORM LABELS --- */
+/* Targets the text labels above the input boxes in the Login/Register forms */
+[data-testid="stForm"] label p {
+    color: #ffffff !important; /* Slate Grey for high legibility */
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    letter-spacing: 0.01rem;
+}
+
+/* Optional: Targets the 'Username' and 'Password' text specifically if the above is too broad */
+.st-emotion-cache-16idsys p {
+    color: #ffffff !important;
+}
+
+/* Ensures the Tab headers (Register/Login) match the new clean look */
+button[data-baseweb="tab"] p {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+}
+
+
+
+
+
+/* --- REMOVE WHITE TOP BAR --- */
+header[data-testid="stHeader"] {
+    background-color: transparent !important; /* Removes the white background */
+    background: transparent !important;
+    border-bottom: none !important; /* Removes the thin grey line */
+}
+
+
+/* Optional: Shift the main content up slightly now that the header is 'gone' */
+.main .block-container {
+    padding-top: 2rem !important; 
+}

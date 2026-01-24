@@ -1,1 +1,10 @@
 streamlit
+google-cloud-storage
+google-auth
+google-generativeai
+lxml
+folium
+streamlit-folium
+google-cloud-firestore
+streamlit-authenticator
+streamlit-echarts

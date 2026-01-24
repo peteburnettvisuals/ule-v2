@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UniversalAssessmentSchema>    
+    <Category name="Governance, Compliance &amp; Legal" id="CAT-GOV">
+        
+        <CSF id="CSF-GOV-01" name="Modern Slavery Statement">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>100</Max>
+                <Multiplier>1</Multiplier> 
+                <Type>Binary</Type>
+                <Criteria>
+                    <Item priority="Must">Must be signed and dated</Item>
+                    <Item priority="Must">Must not be an internet copy referencing irrelevant legislation</Item>
+                    <Item priority="Must">Must comply with procurement body legislation</Item>
+                </Criteria>
+                <Context>This is a standard requirement for all modern procurement processes, indicating that the supply chain has beenm checked to ensure that there are no human rights abuses hidden within it.</Context>
+            </CanonicalAttributes>
+        </CSF>
+
+        <CSF id="CSF-GOV-02" name="Policy Consistency &amp; Readiness">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>100</Max>
+                <Multiplier>2</Multiplier>
+                <Type>Binary</Type>
+                <Criteria>
+                    <Item priority="Must">Policies must able to to be produced and supplied within 24 hours</Item>
+                    <Item priority="Must">Policies must not contain contradictions as a group (ie Policy A says something different to policy B)</Item>
+                    <Item priority="Must">Must not be an internet copy referencing irrelevant legislation</Item>
+                    <Item priority="Must">Must comply with procurement body legislation</Item>
+                </Criteria>
+                <Context>Evidence may often be required at short notice, and will be cross-checked to ensure your documentation is consistent and coherenet across the board.</Context>
+            </CanonicalAttributes>
+        </CSF>
+    </Category>
+
+    <Category name="Financial Readiness &amp; Transparency" id="CAT-FIN">
+        
+        <CSF id="CSF-FIN-01" name="2-3 Years Filed Accounts">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>100</Max>
+                <Multiplier>1</Multiplier> 
+                <Type>Binary</Type>
+                <Criteria>
+                    <Item priority="Must">Must be signed and dated</Item>
+                    <Item priority="Must">Must be compiled by certified accountant</Item>
+                    <Item priority="Must">Must comply with procurement body legislation</Item>
+                </Criteria>
+                <Context>Accounts will be required for due diligence purposes, to check for stability and growth.</Context>
+            </CanonicalAttributes>
+        </CSF>
+
+        <CSF id="CSF-FIN-02" name="Turnover Threshold">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>100</Max>
+                <Multiplier>1</Multiplier>
+                <Type>Binary</Type>
+                <Criteria>
+                    <Item priority="Must">Turnover must be 1.5x to 2x the bid contract value </Item>
+                </Criteria>
+                <Context>The procurement team will be looking to appoint a supplier for whom the project is important, but not overwhelming, hence this size of contract vs size of supplier gauging.</Context>
+            </CanonicalAttributes>
+        </CSF>
+    </Category>
+
+    <Category name="Social Value &amp; Local Impact" id="CAT-SOC">
+        
+        <CSF id="CSF-SOC-01" name="Social Value Strategy">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>100</Max>
+                <Multiplier>2</Multiplier>
+                <Type>Binary</Type>
+                <Criteria>
+                    <Item priority="Must">Include Measurable commitments, not aspirations</Item>
+                    <Item priority="Must">Comply with procurement body legislation</Item>
+                    <Item priority="Should">Include reference to the creation of local jobs and apprenticeships</Item>
+                    <Item priority="Should">Include reference fuel poverty support</Item>
+                </Criteria>
+                <Context>Procurement teams will often be required to show that they have selected suppliers who meet desired social contribution levels.</Context>
+            </CanonicalAttributes>
+        </CSF>
+
+        <CSF id="CSF-SOC-02" name="Case Study &amp; KPI Evidence">
+            <CanonicalAttributes>
+                <Min>0</Min>
+                <Max>100</Max>
+                <Multiplier>1</Multiplier>
+                <Type>Binary</Type>
+                <Criteria>
+                    <Item priority="Must">Include Retrofit-relevant outcomes</Item>
+                    <Item priority="Should">Include client references (ideally public sector)</Item>
+                </Criteria>
+                <Context>Procurement teams will want to see evidence that projects have been undertaken before and delivered succsessfully to the client's satisfaction.</Context>
+            </CanonicalAttributes>
+        </CSF>
+    </Category>
+</UniversalAssessmentSchema>
