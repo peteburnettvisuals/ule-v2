@@ -29,7 +29,7 @@ if not credentials_info:
     st.stop()
 
 gcp_service_creds = service_account.Credentials.from_service_account_info(credentials_info)
-db = firestore.Client(credentials=gcp_service_creds, project=credentials_info["project_id"], database="spldb")
+db = firestore.Client(credentials=gcp_service_creds, project=credentials_info["project_id"], database="uledb")
 
 # --- 2. ENGINE UTILITIES ---
 def load_universal_schema(file_path):
@@ -37,46 +37,44 @@ def load_universal_schema(file_path):
     return tree.getroot()
 
 # --- 3. SESSION STATE INITIALIZATION ---
-if "active_csf" not in st.session_state:
-    st.session_state.active_csf = "CSF-GOV-01"
+if "active_lesson" not in st.session_state:
+    st.session_state.active_lesson = "Lesson-GOV-01"
     st.session_state.needs_handshake = True  # NEW: Trigger first handshake on load
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "archived_status" not in st.session_state:
-    # Tracks which criteria items are met: { "CSF_ID": { "Criteria_Text": True/False } }
+    # Tracks which element items are met: { "Lesson_ID": { "Element_Text": True/False } }
     st.session_state.archived_status = {}
 if "all_histories" not in st.session_state:
-    # Structure: { "CSF-ID": [ {role, content}, ... ] }
+    # Structure: { "Lesson-ID": [ {role, content}, ... ] }
     st.session_state.all_histories = {}
 
 
 # --- 4. THE AI AUDITOR ENGINE (STABILIZED) ---
-def get_auditor_response(user_input, csf_data):
+def get_auditor_response(user_input, lesson_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
     # 1. CLEAN CONTEXT STRINGS
-    c_name = str(csf_data.get('name', 'Audit Item'))
-    c_brief = str(csf_data.get('context_brief', 'No context.'))
-    c_type = str(csf_data.get('type', 'Proportional'))
-    c_list = ", ".join(csf_data.get('criteria', []))
+    c_name = str(lesson_data.get('name', 'Lesson'))
+    c_brief = str(lesson_data.get('context_brief', 'No context.'))
+    c_list = ", ".join(lesson_data.get('element', []))
 
-    # 2. THE RE-INJECTED MISSION RULES
-    # This ensures the AI knows the 'Secret Handshake' for the UI
+    # 2. THE RE-INJECTED MISSION RULES (Mastery Focused)
     base_prompt = (
-        f"You are the Bid Readiness Assistant for {c_name}. "
-        f"MISSION BRIEF: {c_brief}. EVALUATION MODE: {c_type}. "
-        f"CRITERIA: {c_list}. "
-        f"RULES: If MODE is 'Binary', append [VALIDATE: ALL] strictly when the user states that they beleive that all shown criteria are met."
-        f"If MODE is 'Proportional', append [SCORE: X] where X is 0-100 based on what the user says they have available."
-        f"TONE OF VOICE: Friendly, helpful, professional."
+        f"You are the trainer for the lesson: {c_name}. "
+        f"LESSON OBJECTIVE: {c_brief}. "
+        f"REQUIRED LEARNING ELEMENTS: {c_list}. "
+        f"YOUR MISSION: Guide the student through these elements one by one. "
+        f"RULES: Strictly append [VALIDATE: ALL] only after the student has successfully passed the Application Scenario. "
+        f"TONE: Encouraging, expert, safety-conscious."
     )
 
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
     if user_input == "INITIATE_HANDSHAKE":
         # One-shot stable start
-        full_call = f"{base_prompt} USER: Please introduce this CSF, explain why it's important, and ask if I believe that my organisation can meet the requirements shown."
+        full_call = f"{base_prompt} USER: Please introduce this Lesson, explain why it's important, and start explaining the first element."
         response = model.generate_content(full_call)
     else:
         # --- THE TRANSLATOR: Schema fix for [role, parts, text] ---
@@ -89,30 +87,30 @@ def get_auditor_response(user_input, csf_data):
         
         chat = model.start_chat(history=gemini_history)
         # Re-verify the rules on every turn to prevent AI drift
-        response = chat.send_message(f"Audit Rules: {base_prompt}\n\nUser Evidence: {user_input}")
+        response = chat.send_message(f"Training Content: {base_prompt}\n\nUser Progress: {user_input}")
         
     return response.text
 
-def calculate_live_score(root, archived_status, csf_scores):
+def calculate_live_score(root, archived_status, lesson_scores):
     total_weighted_points = 0
     
-    # Iterate through all CSFs in the XML (Plain-text find)
-    for csf in root.findall('.//CSF'):
-        csf_id = csf.get('id')
-        attribs = csf.find('CanonicalAttributes')
+    # Iterate through all Lessons in the flat XML structure
+    for lesson in root.findall('.//Lesson'):
+        lesson_id = lesson.get('id')
+                
+        # 1. SAFE MULTIPLIER RETRIEVAL
+        # Fallback to 1 if the tag is missing to prevent script crash
+        mult_node = lesson.find('Multiplier')
+        multiplier = int(mult_node.text) if mult_node is not None else 1
         
-        # Pull the weight (Multiplier) from the XML
-        multiplier = int(attribs.find('Multiplier').text)
-        
-        # Calculate the raw 0-100 score for this factor
-        if archived_status.get(csf_id) == True:
-            # Binary 'Must' items are cleared, awarding 100% of weight
+        # 2. MASTERY CHECK
+        # In ULEv2, we only award points for 100% completion (True)
+        if archived_status.get(lesson_id) == True:
             raw_score = 100  
         else:
-            # Proportional 'Best Guess' from the AI (Default to 0 if not yet audited)
-            raw_score = csf_scores.get(csf_id, 0)
+            # We ignore 'Best Guess' proportional scores to enforce the Mastery Ethos
+            raw_score = 0
             
-        # Add the weighted contribution to the total
         total_weighted_points += raw_score * multiplier
                 
     return total_weighted_points
@@ -144,8 +142,8 @@ credentials_data = get_user_credentials()
 if "authenticator" not in st.session_state:
     st.session_state.authenticator = stauth.Authenticate(
         credentials_data,
-        "spl_bid_cookie",
-        "spl_secret_key",
+        "ule_session_cookie",
+        "ule_secret_key",
         cookie_expiry_days=30
     )
 
@@ -160,9 +158,9 @@ def save_audit_progress():
         
         doc_ref.set({
             "all_histories": st.session_state.all_histories,
-            "csf_scores": st.session_state.get("csf_scores", {}),
+            "lesson_scores": st.session_state.get("lesson_scores", {}),
             "archived_status": st.session_state.archived_status,
-            "active_csf": st.session_state.active_csf,
+            "active_lesson": st.session_state.active_lesson,
             "last_updated": firestore.SERVER_TIMESTAMP
         }, merge=True)
 
@@ -175,27 +173,27 @@ def load_audit_progress():
         if doc.exists:
             data = doc.to_dict()
             st.session_state.all_histories = data.get("all_histories", {})
-            st.session_state.csf_scores = data.get("csf_scores", {})
+            st.session_state.lesson_scores = data.get("lesson_scores", {})
             st.session_state.archived_status = data.get("archived_status", {})
-            st.session_state.active_csf = data.get("active_csf", "CSF-GOV-01")
+            st.session_state.active_lesson = data.get("active_lesson", "Lesson-GOV-01")
             # Set chat_history to the last active session
-            st.session_state.chat_history = st.session_state.all_histories.get(st.session_state.active_csf, [])
+            st.session_state.chat_history = st.session_state.all_histories.get(st.session_state.active_lesson, [])
             return True
     return False
 
 
 # --- 5. UI LAYOUT (3-COLUMN SKETCH) ---
-st.set_page_config(layout="wide", page_title="SPL Bid Readiness")
+st.set_page_config(layout="wide", page_title="ULE2 Demo System")
 
 # Load XML data
-root = load_universal_schema('bidcheck-config.xml')
+root = load_universal_schema('ule2-demo.xml')
 
 # --- THE MAIN UI WRAPPER ---
 if not st.session_state.get("authentication_status"):
     # Render the Login UI
     col_l, col_r = st.columns([1, 1], gap="large")
     with col_l:
-        st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/bidready1.png")
+        st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-welcome.png")
         
     
     with col_r: # This is the right-hand column from your login screen
@@ -224,10 +222,10 @@ if not st.session_state.get("authentication_status"):
                 
 
                 # NEW: Restore previous session from DB
-                with st.spinner("Restoring Audit Intelligence..."):
+                with st.spinner("Loading your data ..."):
                     load_audit_progress()
                 
-                st.toast(f"Welcome back! Loading your data ...")
+                st.toast(f"Welcome back! Loading your account data ...")
                 time.sleep(1) 
                 st.rerun() # This triggers the 'else' block immediately
                 
@@ -266,9 +264,9 @@ if not st.session_state.get("authentication_status"):
                         
                         # 3. INITIALIZE: Ensure they start with a clean slate for the first audit
                         st.session_state.all_histories = {}
-                        st.session_state.csf_scores = {}
+                        st.session_state.lesson_scores = {}
                         st.session_state.archived_status = {}
-                        st.session_state.active_csf = "CSF-GOV-01" # Start at the beginning
+                        st.session_state.active_lesson = "CAT-GEAR-01" # Start at the beginning
                         
                         st.success(f"Welcome {new_name}! System initialized for {new_company}.")
                         time.sleep(1.5)
@@ -283,17 +281,17 @@ else:
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.image(
-        "https://peteburnettvisuals.com/wp-content/uploads/2026/01/bidready-inlinelogo.png", 
+        "https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline.png", 
         use_container_width=True
         )
                         
         try:
             # 1. Calculation Safety
-            total_factors = root.findall('.//CSF')
-            max_score = sum(int(csf.find('CanonicalAttributes/Multiplier').text) * 100 for csf in total_factors)
+            total_factors = root.findall('.//Lesson')
+            max_score = sum(int(lesson.find('CanonicalAttributes/Multiplier').text) * 100 for lesson in total_factors)
             
             archived = st.session_state.get("archived_status", {})
-            scores = st.session_state.get("csf_scores", {})
+            scores = st.session_state.get("lesson_scores", {})
             live_score = calculate_live_score(root, archived, scores)
             
             # Ensure readiness_pct is a clean number for ECharts
@@ -353,33 +351,37 @@ else:
         st.caption(f"USER: {st.session_state.get('name', 'Unknown User')}")
         st.caption(f"COMPANY: {st.session_state.get('company', 'Company Name Not Listed')}")       
         
-        st.subheader("Readiness Categories:")
-        for cat in root.findall('Category'):
-            cat_id = cat.get('id')
-            cat_name = cat.get('name')
+        st.subheader("Modules:")
+        for mod_node in root.findall('Module'):
+            mod_id = mod_node.get('id')
+            mod_name = mod_node.get('name')
+            
+            # Now this works because mod_node is still an XML Element
+            lessons_in_mod = mod_node.findall('Lesson')
+            mod_lesson_ids = [l.get('id') for l in lessons_in_mod]
             
             # 1. Check for Category Completion (Your existing logic)
-            cat_csf_ids = [csf.get('id') for csf in cat.findall('CSF')]
-            is_cat_complete = all(
+            mod = [lesson.get('id') for lesson in mod.findall('Lesson')]
+            is_mod_complete = all(
                 st.session_state.archived_status.get(cid) == True or 
-                st.session_state.get("csf_scores", {}).get(cid, 0) >= 85
-                for cid in cat_csf_ids
+                st.session_state.get("lesson_scores", {}).get(cid, 0) >= 85
+                for cid in lessons_in_mod
             )
             
-            cat_label = f"{cat_name} ✅" if is_cat_complete else cat_name
+            mod_label = f"{mod_name} ✅" if is_mod_complete else mod_name
             
-            if st.button(cat_label, key=f"cat_btn_{cat_id}", use_container_width=True):
+            if st.button(mod_label, key=f"mod_btn_{mod_id}", use_container_width=True):
                 # 2. Update the active Category
-                st.session_state.active_cat = cat_id
+                st.session_state.active_mod = mod_id
                 
-                # 3. SWITCH FOCUS: Find the first CSF in this new category
-                first_csf = cat.find('CSF')
-                if first_csf is not None:
-                    new_csf_id = first_csf.get('id')
-                    st.session_state.active_csf = new_csf_id
+                # 3. SWITCH FOCUS: Find the first Lesson in this new module
+                first_lesson = mod.find('Lesson')
+                if first_lesson is not None:
+                    new_lesson_id = first_lesson.get('id')
+                    st.session_state.active_lesson = new_lesson_id
                     
                     # 4. LOAD HISTORY: Ensure Col 2 switches to the right chat
-                    st.session_state.chat_history = st.session_state.all_histories.get(new_csf_id, [])
+                    st.session_state.chat_history = st.session_state.all_histories.get(new_lesson_id, [])
                     
                     # 5. HANDSHAKE CHECK: Trigger if it's a fresh area
                     st.session_state.needs_handshake = not bool(st.session_state.chat_history)
@@ -391,35 +393,35 @@ else:
 
     # --- COLUMN 1: Unique Key Fix ---
     with col1:
-        active_cat_id = st.session_state.get("active_cat", "CAT-GOV")
-        category_node = root.find(f".//Category[@id='{active_cat_id}']")
-        cat_display_name = category_node.get('name') if category_node is not None else "Selection"
+        active_mod_id = st.session_state.get("active_mod", "CAT-GEAR")
+        module_node = root.find(f".//Module[@id='{active_mod_id}']")
+        mod_display_name = module_node.get('name') if module_node is not None else "Selection"
 
-        st.subheader(f"Critical Success Factors for {cat_display_name}")
+        st.subheader(f"Lessons for {mod_display_name}")
         
-        if category_node is not None:
+        if module_node is not None:
             # Use a set to track rendered IDs in this specific loop run
             rendered_ids = set()
             
-            for csf in category_node.findall('CSF'):
-                csf_id = csf.get('id')
+            for lesson in module_node.findall('Lesson'):
+                lesson_id = lesson.get('id')
                 
                 # Avoid duplicate rendering in the same loop
-                if csf_id in rendered_ids:
+                if lesson_id in rendered_ids:
                     continue
-                rendered_ids.add(csf_id)
+                rendered_ids.add(lesson_id)
                 
-                csf_name = csf.get('name')
+                lesson_name = lesson.get('name')
                 
                 # Keep your Tick Logic
-                is_validated = st.session_state.archived_status.get(csf_id, False)
-                current_val = st.session_state.get("csf_scores", {}).get(csf_id, 0)
-                display_label = f"{csf_name} ✅" if (is_validated or current_val >= 85) else csf_name
+                is_validated = st.session_state.archived_status.get(lesson_id, False)
+                current_val = st.session_state.get("lesson_scores", {}).get(lesson_id, 0)
+                display_label = f"{lesson_name} ✅" if (is_validated or current_val >= 85) else lesson_name
                 
-                is_active = st.session_state.active_csf == csf_id
+                is_active = st.session_state.active_lesson == lesson_id
                 
-                # UNIQUE KEY: Combine Category + CSF ID to ensure uniqueness
-                button_key = f"btn_{active_cat_id}_{csf_id}"
+                # UNIQUE KEY: Combine Category + Lesson ID to ensure uniqueness
+                button_key = f"btn_{active_mod_id}_{lesson_id}"
                 
                 if st.button(
                     display_label, 
@@ -427,9 +429,9 @@ else:
                     type="primary" if is_active else "secondary", 
                     use_container_width=True
                 ):
-                    st.session_state.active_csf = csf_id
-                    # Load history for this specific CSF from our dictionary
-                    st.session_state.chat_history = st.session_state.all_histories.get(csf_id, [])
+                    st.session_state.active_lesson = lesson_id
+                    # Load history for this specific Lesson from our dictionary
+                    st.session_state.chat_history = st.session_state.all_histories.get(lesson_id, [])
                     
                     # If there is no history, trigger the handshake flag
                     if not st.session_state.chat_history:
@@ -440,19 +442,17 @@ else:
 
     # --- COLUMN 2: THE AUDIT CHAT (Surgical Fix) ---
     with col2:
-        active_csf_node = root.find(f".//CSF[@id='{st.session_state.active_csf}']")
-        attribs = active_csf_node.find('CanonicalAttributes')
-        
+        active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
+                
         # Standard Handshake Trigger (Same as before, but with 'model' role fix)
         if st.session_state.get("needs_handshake", False):
             with st.spinner("Lead Auditor entering..."):
                 handshake_data = {
-                    'id': str(st.session_state.active_csf),
-                    'name': str(active_csf_node.get('name')),
-                    'type': str(attribs.find('Type').text),
-                    'context_brief': str(attribs.find('Context').text),
+                    'id': str(st.session_state.active_lesson),
+                    'name': str(active_lesson_node.get('name')),
+                    'context_brief': str(active_lesson_node.find('Context').text),
                     # Ensure this is a list of STRINGS, not XML Elements
-                    'criteria': [str(i.text) for i in attribs.find('Criteria').findall('Item')]
+                    'element': [str(i.text) for i in active_lesson_node.find('LessonElements').findall('Element')]
 }
                 
                 response = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
@@ -464,7 +464,7 @@ else:
                 st.rerun()
 
         # 2. STANDARD DISPLAY: Only reached if handshake is False
-        st.subheader(f"💬 Validating: {active_csf_node.get('name')}")
+        st.subheader(f"💬 Validating: {active_lesson_node.get('name')}")
 
         chat_container = st.container(height=500)
         for msg in st.session_state.chat_history:
@@ -476,34 +476,33 @@ else:
                 
         if user_input := st.chat_input("Your response ..."):
             # We re-package the context for the evaluation turn
-            csf_context = {
-                'id': st.session_state.active_csf,
-                'name': active_csf_node.get('name'),
-                'type': attribs.find('Type').text,
-                'context_brief': attribs.find('Context').text,
-                'criteria': [i.text for i in attribs.find('Criteria').findall('Item')]
+            lesson_context = {
+                'id': st.session_state.active_lesson,
+                'name': active_lesson_node.get('name'),
+                'context_brief': active_lesson_node.find('Context').text,
+                'element': [i.text for i in active_lesson_node.find('LessonElements').findall('Element')]
             }
             
             st.session_state.chat_history.append({"role": "user", "content": user_input})
-            response = get_auditor_response(user_input, csf_context)
+            response = get_auditor_response(user_input, lesson_context)
 
             # 1. PROCESS AI LOGIC (No saves here)
             score_match = re.search(r"\[SCORE: (\d+)\]", response)
             if score_match:
                 val = int(score_match.group(1))
-                if "csf_scores" not in st.session_state: st.session_state.csf_scores = {}
-                st.session_state.csf_scores[st.session_state.active_csf] = val
+                if "lesson_scores" not in st.session_state: st.session_state.lesson_scores = {}
+                st.session_state.lesson_scores[st.session_state.active_lesson] = val
 
             if "[VALIDATE: ALL]" in response:
-                st.session_state.archived_status[st.session_state.active_csf] = True
+                st.session_state.archived_status[st.session_state.active_lesson] = True
 
             # 2. UPDATE LOCAL STATE
             clean_resp = re.sub(r"\[.*?\]", "", response).strip()
             st.session_state.chat_history.append({"role": "model", "content": clean_resp})
-            st.session_state.all_histories[st.session_state.active_csf] = st.session_state.chat_history
+            st.session_state.all_histories[st.session_state.active_lesson] = st.session_state.chat_history
 
             # 3. CONSOLIDATED AUTOSAVE WITH SPINNER
-            with st.status("🔒 Securing Evidence to C2...") as status:
+            with st.status("🔒 Uploading progress to system ...") as status:
                 save_audit_progress()
                 time.sleep(2) # The perceptual buffer for database commitment
                 status.update(label="✅ Progress Secure", state="complete", expanded=False)
@@ -512,30 +511,31 @@ else:
 
     # --- COLUMN 3: STABILIZED CHECKLIST ---
     with col3:
-        st.subheader("Requirement Checklist")
-        criteria_nodes = active_csf_node.findall(".//Item")
+        st.subheader("Lesson Elements")
+        element_list_node = active_lesson_node.find('LessonElements')
+        if element_list_node is not None:
+            element_nodes = element_list_node.findall("Element")
         
-        # Check if the ENTIRE CSF is already validated (True)
-        csf_validated_globally = st.session_state.archived_status.get(st.session_state.active_csf) == True
+        # Check if the ENTIRE Lesson is already validated (True)
+        lesson_validated_globally = st.session_state.archived_status.get(st.session_state.active_lesson) == True
         
-        for item_node in criteria_nodes:
+        for item_node in element_nodes:
             text = item_node.text
-            priority = item_node.get("priority")
             
             # FIX: Ensure we don't call .get() on a boolean 'True'
-            csf_entry = st.session_state.archived_status.get(st.session_state.active_csf, {})
+            lesson_entry = st.session_state.archived_status.get(st.session_state.active_lesson, {})
             
-            if csf_validated_globally:
+            if lesson_validated_globally:
                 is_met = True
-            elif isinstance(csf_entry, dict):
-                is_met = csf_entry.get(text, False)
+            elif isinstance(lesson_entry, dict):
+                is_met = lesson_entry.get(text, False)
             else:
                 is_met = False
                 
             # Color coding logic remains the same
-            bg_color = "#28a745" if is_met else ("#dc3545" if priority == "Must" else "#ffc107")
+            bg_color = "#28a745" if is_met else "#ffc107"
             st.markdown(f"""
                 <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin-bottom:10px; color:white; font-weight:bold;">
-                    [{priority.upper()}] {text}
+                    {text}
                 </div>
             """, unsafe_allow_html=True)

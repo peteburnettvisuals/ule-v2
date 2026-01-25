@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ULESchema>
+    <Config>
+        <course_title>SkyHigh Elementary Parachute Training</course_title>
+        <overview>This course will teach you the essentials of parachuting, including the gear, jump and emergency procedures</overview>
+    </Config>
+    <Module name="Equipment" id="CAT-GEAR">
+        <Lesson id="CAT-GEAR-01" name="The Parachute Rig">
+            <Context>This lesson covers the elements of the parachute rig, so you know where everything is.</Context>
+            <MaxScore>100</MaxScore>
+            <Multiplier>1</Multiplier>
+            <LessonElements>
+                <Element>Dual-canopy requirement: Main and Reserve</Element>
+                <Element>Main Ripcord: Located right side, chest height.</Element>
+                <Element>Reserve Handle: Silver Handle, Located left side, hip height.</Element>
+            </LessonElements>
+            <LessonResources>
+                <Resource type="image" file="CAT-GEAR-01_chute_overview.jpg">Overview diagram of parachute.</Resource>
+                <Resource type="image" file="CAT-GEAR-01_chute_handles.jpg">Diagram of parachute focussing on handle colour and location.</Resource>
+            </LessonResources>
+            <ApplicationScenario>The student is at the dropzone, and they are given a new parachute. What should they check for, and where will they find it?</ApplicationScenario>
+        </Lesson>
+        <Lesson id="CAT-GEAR-02" name="The Altimeter">
+            <Context>This lesson looks at the altimeter.</Context>
+            <Multiplier>1</Multiplier>
+            <MaxScore>100</MaxScore>
+            <LessonElements>
+                <Element>Check Cadence: Every 5 seconds during freefall</Element>
+                <Element>Always set Altimeter so that zero matches dropzone elevation.</Element>
+                <Element>5,000ft AGL: Start of the Decision Window</Element>
+                <Element>3,000ft AGL: Absolute Mandatory Deployment Altitude.</Element>
+            </LessonElements>
+            <LessonResources>
+                <Resource type="image" file="CAT-GEAR-02_altimeter_example.jpg">Example image of a wrist altimeter.</Resource>
+                <Resource type="image" file="CAT-GEAR-02_decision_window.jpg">Diagram of the decision window, showing altitude heights.</Resource>
+            </LessonResources>
+            <ApplicationScenario>The student is at 6,000 feet. What are their actions over the next few seconds?</ApplicationScenario>
+        </Lesson>
+    </Module>
+</ULESchema>
