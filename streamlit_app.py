@@ -38,7 +38,7 @@ def load_universal_schema(file_path):
 
 # --- 3. SESSION STATE INITIALIZATION ---
 if "active_lesson" not in st.session_state:
-    st.session_state.active_lesson = "Lesson-GOV-01"
+    st.session_state.active_lesson = "CAT-GEAR-01"
     st.session_state.needs_handshake = True  # NEW: Trigger first handshake on load
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
