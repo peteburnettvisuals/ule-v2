@@ -208,7 +208,7 @@ if not st.session_state.get("authentication_status"):
             auth_result = authenticator.login(
                 location="main", 
                 key="spl_login_form",
-                fields={'Form name': 'Login', 'Username': 'Corporate Email', 'Password': 'Password'}
+                fields={'Form name': 'Login', 'Username': 'Email', 'Password': 'Password'}
     )
             
             # 2. THE SILENT GATE: Catch the login the moment it happens
@@ -237,7 +237,7 @@ if not st.session_state.get("authentication_status"):
         with tab_register:
             st.subheader("New User Registration")
             with st.form("registration_form"):
-                new_email = st.text_input("Corporate/Work Email")
+                new_email = st.text_input("Email")
                 new_company = st.text_input("Company Name")
                 new_name = st.text_input("Full Name")
                 new_password = st.text_input("Password", type="password")
