@@ -91,28 +91,17 @@ def get_auditor_response(user_input, lesson_data):
         
     return response.text
 
+# Updated calculate_live_score (Line 101)
 def calculate_live_score(root, archived_status, lesson_scores):
     total_weighted_points = 0
-    
-    # Iterate through all Lessons in the flat XML structure
     for lesson in root.findall('.//Lesson'):
         lesson_id = lesson.get('id')
-                
-        # 1. SAFE MULTIPLIER RETRIEVAL
-        # Fallback to 1 if the tag is missing to prevent script crash
-        mult_node = lesson.find('Multiplier')
-        multiplier = int(mult_node.text) if mult_node is not None else 1
+        # Look for Multiplier directly as a child of Lesson
+        m_node = lesson.find('Multiplier')
+        multiplier = int(m_node.text) if m_node is not None else 1
         
-        # 2. MASTERY CHECK
-        # In ULEv2, we only award points for 100% completion (True)
         if archived_status.get(lesson_id) == True:
-            raw_score = 100  
-        else:
-            # We ignore 'Best Guess' proportional scores to enforce the Mastery Ethos
-            raw_score = 0
-            
-        total_weighted_points += raw_score * multiplier
-                
+            total_weighted_points += 100 * multiplier
     return total_weighted_points
 
 def get_user_credentials():
@@ -287,8 +276,11 @@ else:
                         
         try:
             # 1. Calculation Safety
-            total_factors = root.findall('.//Lesson')
-            max_score = sum(int(lesson.find('CanonicalAttributes/Multiplier').text) * 100 for lesson in total_factors)
+            total_lessons = root.findall('.//Lesson')
+            max_score = 0
+            for lesson in total_lessons:
+                m_node = lesson.find('Multiplier')
+                max_score += (int(m_node.text) if m_node is not None else 1) * 100
             
             archived = st.session_state.get("archived_status", {})
             scores = st.session_state.get("lesson_scores", {})
@@ -356,36 +348,27 @@ else:
             mod_id = mod_node.get('id')
             mod_name = mod_node.get('name')
             
-            # Now this works because mod_node is still an XML Element
+            # Use mod_node (the Element), not mod (the undefined name)
             lessons_in_mod = mod_node.findall('Lesson')
             mod_lesson_ids = [l.get('id') for l in lessons_in_mod]
             
-            # 1. Check for Category Completion (Your existing logic)
-            mod = [lesson.get('id') for lesson in mod.findall('Lesson')]
             is_mod_complete = all(
                 st.session_state.archived_status.get(cid) == True or 
                 st.session_state.get("lesson_scores", {}).get(cid, 0) >= 85
-                for cid in lessons_in_mod
+                for cid in mod_lesson_ids
             )
             
             mod_label = f"{mod_name} ✅" if is_mod_complete else mod_name
             
             if st.button(mod_label, key=f"mod_btn_{mod_id}", use_container_width=True):
-                # 2. Update the active Category
                 st.session_state.active_mod = mod_id
-                
-                # 3. SWITCH FOCUS: Find the first Lesson in this new module
-                first_lesson = mod.find('Lesson')
+                # Use mod_node to find child lessons
+                first_lesson = mod_node.find('Lesson')
                 if first_lesson is not None:
                     new_lesson_id = first_lesson.get('id')
                     st.session_state.active_lesson = new_lesson_id
-                    
-                    # 4. LOAD HISTORY: Ensure Col 2 switches to the right chat
                     st.session_state.chat_history = st.session_state.all_histories.get(new_lesson_id, [])
-                    
-                    # 5. HANDSHAKE CHECK: Trigger if it's a fresh area
                     st.session_state.needs_handshake = not bool(st.session_state.chat_history)
-                
                 st.rerun()
 
     # MAIN INTERFACE: 3 Columns
