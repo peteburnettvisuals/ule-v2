@@ -270,7 +270,7 @@ else:
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.image(
-        "https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline3.png", 
+        "https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline4.png", 
         use_container_width=True
         )
                         
@@ -466,7 +466,7 @@ else:
                 st.rerun()
 
             # 2. STANDARD DISPLAY: Only reached if handshake is False
-            st.subheader(f"💬 Validating: {active_lesson_node.get('name')}")
+            st.subheader(f"🎯 LESSON: {active_lesson_node.get('name')}")
 
             chat_container = st.container(height=500)
             for msg in st.session_state.chat_history:
