@@ -4,7 +4,7 @@
         <course_title>SkyHigh Elementary Parachute Training</course_title>
         <overview>This course will teach you the essentials of parachuting, including the gear, jump and emergency procedures</overview>
     </Config>
-    <Module name="Equipment" id="CAT-GEAR">
+    <Module name="M1: Equipment" id="CAT-GEAR">
         <Lesson id="CAT-GEAR-01" name="The Parachute Rig">
             <Context>This lesson covers the elements of the parachute rig, so you know where everything is.</Context>
             <MaxScore>100</MaxScore>
