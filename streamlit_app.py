@@ -55,39 +55,40 @@ def get_auditor_response(user_input, lesson_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
-    # 1. Pull Personal Context
+    # 1. LOCAL VARIABLE MAPPING (Replacing c_name)
+    current_lesson_name = lesson_data.get('name', 'this lesson')
     profile = st.session_state.get("u_profile", "A student eager to learn.")
     
-    # 2. Extract the 'Hidden' content from your new XML structure
-    # This is the RAG part—the AI sees the 'Element.text', not just the 'title'
+    # 2. ENRICHED RAG CONTENT
+    # This pulls the full Element.text for the AI to teach from
     rag_content = "\n".join([f"- {e['title']}: {e['text']}" for e in lesson_data.get('elements_full', [])])
+    resource_list = lesson_data.get('resource_list', [])
 
+    # 3. THE "STAY IN THE BOOK" PROMPT
     base_prompt = (
-        f"You are the SkyHigh Flight Instructor. Your student has this profile: {profile}. "
-        f"Always relate the importance of the technical details back to their specific goals. "
-        f"OFFICIAL TRAINING DATA:\n{rag_content}\n\n"
-        f"RESOURCES TO SHOW: {lesson_data.get('resource_list', [])}\n"
-        f"INSTRUCTIONS: Use [[IMAGE:filename]] to demonstrate concepts. Append [VALIDATE: ALL] strictly on mastery."
+        f"You are the SkyHigh Flight Instructor teaching: {current_lesson_name}. "
+        f"STUDENT PROFILE: {profile}. Relate technical details to these goals.\n\n"
+        f"OFFICIAL TEXTBOOK CONTENT:\n{rag_content}\n\n"
+        f"AVAILABLE MEDIA: {resource_list}\n\n"
+        f"STRICT RULES:\n"
+        f"1. ONLY teach using the 'OFFICIAL TEXTBOOK CONTENT'. Do not introduce external topics (e.g., aerodynamics).\n"
+        f"2. Use [[IMAGE:filename]] to show diagrams when discussing specific components.\n"
+        f"3. Append [VALIDATE: ALL] ONLY when the student masters the Application Scenario."
     )
 
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
     if user_input == "INITIATE_HANDSHAKE":
-        # One-shot stable start
-        full_call = f"{base_prompt} USER: Please introduce this Lesson, explain why it's important, and start explaining the first element."
+        # Grounding the handshake in the actual Lesson Name
+        full_call = f"{base_prompt}\n\nUSER: Please introduce the lesson '{current_lesson_name}' and start with the first element."
         response = model.generate_content(full_call)
     else:
-        # --- THE TRANSLATOR: Schema fix for [role, parts, text] ---
         gemini_history = []
         for msg in st.session_state.chat_history:
-            gemini_history.append({
-                "role": msg["role"],
-                "parts": [{"text": msg["content"]}]
-            })
+            gemini_history.append({"role": msg["role"], "parts": [{"text": msg["content"]}]})
         
         chat = model.start_chat(history=gemini_history)
-        # Re-verify the rules on every turn to prevent AI drift
-        response = chat.send_message(f"Training Content: {base_prompt}\n\nUser Progress: {user_input}")
+        response = chat.send_message(f"Training Context: {base_prompt}\n\nUser Input: {user_input}")
         
     return response.text
 
