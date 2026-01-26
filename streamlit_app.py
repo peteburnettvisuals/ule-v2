@@ -270,7 +270,7 @@ else:
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.image(
-        "https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline2.png", 
+        "https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline3.png", 
         use_container_width=True
         )
                         
@@ -518,7 +518,7 @@ else:
     # --- COLUMN 3: STABILIZED CHECKLIST ---
     # --- COLUMN 3: ENRICHED ELEMENT CHECKLIST ---
     with col3:
-        st.subheader("Learning Objectives")
+        st.subheader("Content for this Lesson")
         element_list_node = active_lesson_node.find('LessonElements')
         
         if element_list_node is not None:
@@ -533,7 +533,7 @@ else:
 
                 st.markdown(f"""
                     <div style="background-color:{bg_color}; padding:12px; border-radius:8px; margin-bottom:10px; color:white; border-left: 5px solid #a855f7;">
-                        <div style="font-size:0.8rem; opacity:0.8;">💡 OBJECTIVE</div>
+                        <div style="font-size:0.8rem; opacity:0.8;">💡 LEARNING OBJECTIVE</div>
                         <div style="font-weight:bold; font-size:1rem;">{title}</div>
                     </div>
                 """, unsafe_allow_html=True)
