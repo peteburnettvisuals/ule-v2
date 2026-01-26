@@ -270,7 +270,7 @@ else:
     # SIDEBAR: The Speedometer & Nav
     with st.sidebar:
         st.image(
-        "https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline.png", 
+        "https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline2.png", 
         use_container_width=True
         )
                         
@@ -344,37 +344,36 @@ else:
         st.caption(f"COMPANY: {st.session_state.get('company', 'Company Name Not Listed')}")       
         
         st.subheader("Modules:")
-        for mod_node in root.findall('Module'):
+        modules = root.findall('Module')
+        for idx, mod_node in enumerate(modules):
             mod_id = mod_node.get('id')
             mod_name = mod_node.get('name')
             
-            # Use mod_node (the Element), not mod (the undefined name)
-            lessons_in_mod = mod_node.findall('Lesson')
-            mod_lesson_ids = [l.get('id') for l in lessons_in_mod]
+            # Check if this module is unlocked
+            if idx == 0:
+                mod_unlocked = True
+            else:
+                # Check if ALL lessons in the PREVIOUS module are complete
+                prev_mod_lessons = modules[idx-1].findall('Lesson')
+                mod_unlocked = all(st.session_state.archived_status.get(l.get('id')) == True for l in prev_mod_lessons)
             
-            is_mod_complete = all(
-                st.session_state.archived_status.get(cid) == True or 
-                st.session_state.get("lesson_scores", {}).get(cid, 0) >= 85
-                for cid in mod_lesson_ids
-            )
+            # Check if the WHOLE current module is complete
+            current_mod_lessons = mod_node.findall('Lesson')
+            mod_complete = all(st.session_state.archived_status.get(l.get('id')) == True for l in current_mod_lessons)
             
-            mod_label = f"{mod_name} ✅" if is_mod_complete else mod_name
+            # Icon Logic
+            m_icon = "✅" if mod_complete else ("🔒" if not mod_unlocked else "📂")
             
-            if st.button(mod_label, key=f"mod_btn_{mod_id}", use_container_width=True):
+            if st.button(f"{m_icon} {mod_name}", key=f"side_{mod_id}", disabled=not mod_unlocked, use_container_width=True):
                 st.session_state.active_mod = mod_id
-                # Use mod_node to find child lessons
-                first_lesson = mod_node.find('Lesson')
-                if first_lesson is not None:
-                    new_lesson_id = first_lesson.get('id')
-                    st.session_state.active_lesson = new_lesson_id
-                    st.session_state.chat_history = st.session_state.all_histories.get(new_lesson_id, [])
-                    st.session_state.needs_handshake = not bool(st.session_state.chat_history)
+                # Set first lesson of module as active
+                st.session_state.active_lesson = current_mod_lessons[0].get('id')
                 st.rerun()
 
     # MAIN INTERFACE: 3 Columns
     col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
 
-    # --- COLUMN 1: Unique Key Fix ---
+    # --- COLUMN 1: THE SEQUENTIAL LESSON ROADMAP ---
     with col1:
         active_mod_id = st.session_state.get("active_mod", "CAT-GEAR")
         module_node = root.find(f".//Module[@id='{active_mod_id}']")
@@ -383,45 +382,63 @@ else:
         st.subheader(f"Lessons for {mod_display_name}")
         
         if module_node is not None:
-            # Use a set to track rendered IDs in this specific loop run
+            # Capture all lessons in a list to allow index-based 'previous lesson' checks
+            lessons = module_node.findall('Lesson')
             rendered_ids = set()
             
-            for lesson in module_node.findall('Lesson'):
+            for idx, lesson in enumerate(lessons):
                 lesson_id = lesson.get('id')
                 
-                # Avoid duplicate rendering in the same loop
                 if lesson_id in rendered_ids:
                     continue
                 rendered_ids.add(lesson_id)
                 
                 lesson_name = lesson.get('name')
                 
-                # Keep your Tick Logic
-                is_validated = st.session_state.archived_status.get(lesson_id, False)
-                current_val = st.session_state.get("lesson_scores", {}).get(lesson_id, 0)
-                display_label = f"{lesson_name} ✅" if (is_validated or current_val >= 85) else lesson_name
-                
+                # 1. MASTERY & ACTIVE STATUS
+                is_complete = st.session_state.archived_status.get(lesson_id) == True
                 is_active = st.session_state.active_lesson == lesson_id
                 
-                # UNIQUE KEY: Combine Category + Lesson ID to ensure uniqueness
+                # 2. SEQUENTIAL UNLOCK LOGIC
+                # Rule: Lesson 0 is always unlocked. Others require the previous lesson to be complete.
+                if idx == 0:
+                    is_unlocked = True
+                else:
+                    prev_lesson_id = lessons[idx-1].get('id')
+                    is_unlocked = st.session_state.archived_status.get(prev_lesson_id) == True
+
+                # 3. ICON LOGIC
+                if is_complete:
+                    icon = "✅"
+                elif not is_unlocked:
+                    icon = "🔒"
+                elif is_active:
+                    icon = "🎯"
+                else:
+                    icon = "📖"
+
+                display_label = f"{icon} {lesson_name}"
                 button_key = f"btn_{active_mod_id}_{lesson_id}"
                 
+                # 4. RENDER BUTTON
                 if st.button(
                     display_label, 
                     key=button_key, 
                     type="primary" if is_active else "secondary", 
-                    use_container_width=True
+                    use_container_width=True,
+                    disabled=not is_unlocked  # This is the 'Mastery Gate'
                 ):
                     st.session_state.active_lesson = lesson_id
-                    # Load history for this specific Lesson from our dictionary
                     st.session_state.chat_history = st.session_state.all_histories.get(lesson_id, [])
                     
-                    # If there is no history, trigger the handshake flag
                     if not st.session_state.chat_history:
                         st.session_state.needs_handshake = True 
                     else:
                         st.session_state.needs_handshake = False
                     st.rerun()
+
+                # 5. UX FEEDBACK: Give them a hint if they try to click a locked lesson
+                # (Streamlit handles the 'disabled' look, but a toast adds that 'explainer' feel)
 
     # --- COLUMN 2: THE AUDIT CHAT (Surgical Fix) ---
     with col2:
