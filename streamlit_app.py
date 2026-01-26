@@ -55,19 +55,19 @@ def get_auditor_response(user_input, lesson_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
-    # 1. CLEAN CONTEXT STRINGS
-    c_name = str(lesson_data.get('name', 'Lesson'))
-    c_brief = str(lesson_data.get('context_brief', 'No context.'))
-    c_list = ", ".join(lesson_data.get('element', []))
+    # 1. Pull Personal Context
+    profile = st.session_state.get("u_profile", "A student eager to learn.")
+    
+    # 2. Extract the 'Hidden' content from your new XML structure
+    # This is the RAG part—the AI sees the 'Element.text', not just the 'title'
+    rag_content = "\n".join([f"- {e['title']}: {e['text']}" for e in lesson_data.get('elements_full', [])])
 
-    # 2. THE RE-INJECTED MISSION RULES (Mastery Focused)
     base_prompt = (
-        f"You are the trainer for the lesson: {c_name}. "
-        f"LESSON OBJECTIVE: {c_brief}. "
-        f"REQUIRED LEARNING ELEMENTS: {c_list}. "
-        f"YOUR MISSION: Guide the student through these elements one by one. "
-        f"RULES: Strictly append [VALIDATE: ALL] only after the student has successfully passed the Application Scenario. "
-        f"TONE: Encouraging, expert, safety-conscious."
+        f"You are the SkyHigh Flight Instructor. Your student has this profile: {profile}. "
+        f"Always relate the importance of the technical details back to their specific goals. "
+        f"OFFICIAL TRAINING DATA:\n{rag_content}\n\n"
+        f"RESOURCES TO SHOW: {lesson_data.get('resource_list', [])}\n"
+        f"INSTRUCTIONS: Use [[IMAGE:filename]] to demonstrate concepts. Append [VALIDATE: ALL] strictly on mastery."
     )
 
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
@@ -154,17 +154,29 @@ def save_audit_progress():
         }, merge=True)
 
 def load_audit_progress():
-    """Pull previous audit state from Firestore into session_state."""
+    """Pull previous user profile and audit state from Firestore."""
     if st.session_state.get("authentication_status") and st.session_state.get("username"):
         user_email = st.session_state["username"]
-        doc = db.collection("audits").document(user_email).get()
         
-        if doc.exists:
-            data = doc.to_dict()
+        # 1. HYDRATE PROFILE: Pull Aspirations/Experience from 'users' collection
+        user_doc = db.collection("users").document(user_email).get()
+        if user_doc.exists:
+            u_data = user_doc.to_dict()
+            exp = u_data.get('experience', 'New recruit')
+            asp = u_data.get('aspiration', 'Professional certification')
+            # Create the string for the AI prompt
+            st.session_state["u_profile"] = f"Experience: {exp}. Goals: {asp}"
+        
+        # 2. HYDRATE PROGRESS: Pull Audit data from 'audits' collection
+        audit_doc = db.collection("audits").document(user_email).get()
+        if audit_doc.exists:
+            data = audit_doc.to_dict()
             st.session_state.all_histories = data.get("all_histories", {})
             st.session_state.lesson_scores = data.get("lesson_scores", {})
             st.session_state.archived_status = data.get("archived_status", {})
-            st.session_state.active_lesson = data.get("active_lesson", "Lesson-GOV-01")
+            # Use your new XML ID 'CAT-GEAR-01' as the default fallback
+            st.session_state.active_lesson = data.get("active_lesson", "CAT-GEAR-01")
+            
             # Set chat_history to the last active session
             st.session_state.chat_history = st.session_state.all_histories.get(st.session_state.active_lesson, [])
             return True
@@ -228,38 +240,45 @@ if not st.session_state.get("authentication_status"):
                 new_company = st.text_input("Company Name")
                 new_name = st.text_input("Full Name")
                 new_password = st.text_input("Password", type="password")
-                
+                st.markdown("---")
+                st.write("🌍 **Your Learning Profile**")
+                u_experience = st.text_area("What is your current experience level in this field?", placeholder="e.g., Total beginner...")
+                u_aspiration = st.text_area("What do you hope to achieve with this training?", placeholder="e.g., I want to become a solo jumper...")
+                        
                 submit_reg = st.form_submit_button("Register")
                 
                 if submit_reg:
                     if new_email and new_password and new_company:
-                        # UPDATED SYNTAX: No more .generate()[0]
-                        hashed_password = stauth.Hasher.hash(new_password)
+                        # 1. THE SECURITY SEAL: Hash the password
+                        hashed_password = stauth.Hasher([new_password]).generate()[0]
                         
-                        # Save to Firestore using email as the unique Document ID
+                        # 2. DATA COMMIT: Save with the new profile fields
                         db.collection("users").document(new_email).set({
                             "email": new_email,
                             "company": new_company,
                             "full_name": new_name,
                             "password": hashed_password,
+                            "experience": u_experience,
+                            "aspiration": u_aspiration,
                             "created_at": firestore.SERVER_TIMESTAMP,
                         })
                         
-                        # 2. THE JUMP: Manually authenticate and hydrate the session
+                        # 3. HYDRATION: Manually set session state to bypass the login screen
+                        st.session_state["u_profile"] = f"Experience: {u_experience}. Goals: {u_aspiration}"
                         st.session_state["authentication_status"] = True
                         st.session_state["username"] = new_email
                         st.session_state["name"] = new_name
                         st.session_state["company"] = new_company
                         
-                        # 3. INITIALIZE: Ensure they start with a clean slate for the first audit
+                        # 4. INITIALIZE progress containers
                         st.session_state.all_histories = {}
                         st.session_state.lesson_scores = {}
                         st.session_state.archived_status = {}
-                        st.session_state.active_lesson = "CAT-GEAR-01" # Start at the beginning
+                        st.session_state.active_lesson = "CAT-GEAR-01" 
                         
                         st.success(f"Welcome {new_name}! System initialized for {new_company}.")
                         time.sleep(1.5)
-                        st.rerun() # This skips the login screen and goes straight to Assess UI
+                        st.rerun() 
                     else:
                         st.warning("Please fill in all mandatory fields.")
 
@@ -470,11 +489,17 @@ else:
 
             chat_container = st.container(height=500)
             for msg in st.session_state.chat_history:
-                # MAP THE ROLE: Gemini uses 'model', but Streamlit UI likes 'assistant'
                 ui_role = "assistant" if msg["role"] == "model" else "user"
-                
                 with chat_container.chat_message(ui_role):
-                    st.write(msg["content"])
+                    # Scan for the [[IMAGE:filename.jpg]] tag
+                    img_match = re.search(r"\[\[IMAGE:(.*?)\]\]", msg["content"])
+                    if img_match:
+                        clean_text = re.sub(r"\[\[IMAGE:.*?\]\]", "", msg["content"])
+                        st.write(clean_text)
+                        # Render the image from your assets folder
+                        st.image(f"assets/{img_match.group(1)}", use_container_width=True)
+                    else:
+                        st.write(msg["content"])
                     
             if user_input := st.chat_input("Your response ..."):
                 # We re-package the context for the evaluation turn

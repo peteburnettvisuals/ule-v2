@@ -73,6 +73,14 @@ div.stButton button p {
     color: #1e293b !important;
 }
 
+/* Add padding to the right of chat messages to prevent text crowding */
+[data-testid="stChatMessageContent"] {
+    padding-right: 25px !important;
+    padding-left: 15px !important;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
 /* Reset text colors for main area to dark grey */
 h1, h2, h3, span, label {
     color: #ffffff !important;
@@ -131,9 +139,6 @@ button[data-baseweb="tab"] p {
     color: #ffffff !important;
     font-weight: 500 !important;
 }
-
-
-
 
 
 /* --- REMOVE WHITE TOP BAR --- */
