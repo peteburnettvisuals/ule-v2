@@ -425,18 +425,20 @@ else:
 
     # --- COLUMN 2: THE AUDIT CHAT (Surgical Fix) ---
     with col2:
+        # 1. Attempt to find the node
         active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
-                
-        # Standard Handshake Trigger (Same as before, but with 'model' role fix)
-        if st.session_state.get("needs_handshake", False):
-            with st.spinner("Lead Auditor entering..."):
+        
+        # 2. Safety Gate: Only proceed if the lesson was found
+        if active_lesson_node is not None:
+            # Standard Handshake & Chat logic goes here
+            if st.session_state.get("needs_handshake", False):
                 handshake_data = {
                     'id': str(st.session_state.active_lesson),
                     'name': str(active_lesson_node.get('name')),
                     'context_brief': str(active_lesson_node.find('Context').text),
-                    # Ensure this is a list of STRINGS, not XML Elements
                     'element': [str(i.text) for i in active_lesson_node.find('LessonElements').findall('Element')]
-}
+                }
+
                 
                 response = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
                 clean_resp = re.sub(r"\[.*?\]", "", response).strip()
@@ -446,51 +448,55 @@ else:
                 st.session_state.needs_handshake = False
                 st.rerun()
 
-        # 2. STANDARD DISPLAY: Only reached if handshake is False
-        st.subheader(f"💬 Validating: {active_lesson_node.get('name')}")
+            # 2. STANDARD DISPLAY: Only reached if handshake is False
+            st.subheader(f"💬 Validating: {active_lesson_node.get('name')}")
 
-        chat_container = st.container(height=500)
-        for msg in st.session_state.chat_history:
-            # MAP THE ROLE: Gemini uses 'model', but Streamlit UI likes 'assistant'
-            ui_role = "assistant" if msg["role"] == "model" else "user"
-            
-            with chat_container.chat_message(ui_role):
-                st.write(msg["content"])
+            chat_container = st.container(height=500)
+            for msg in st.session_state.chat_history:
+                # MAP THE ROLE: Gemini uses 'model', but Streamlit UI likes 'assistant'
+                ui_role = "assistant" if msg["role"] == "model" else "user"
                 
-        if user_input := st.chat_input("Your response ..."):
-            # We re-package the context for the evaluation turn
-            lesson_context = {
-                'id': st.session_state.active_lesson,
-                'name': active_lesson_node.get('name'),
-                'context_brief': active_lesson_node.find('Context').text,
-                'element': [i.text for i in active_lesson_node.find('LessonElements').findall('Element')]
-            }
-            
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
-            response = get_auditor_response(user_input, lesson_context)
+                with chat_container.chat_message(ui_role):
+                    st.write(msg["content"])
+                    
+            if user_input := st.chat_input("Your response ..."):
+                # We re-package the context for the evaluation turn
+                lesson_context = {
+                    'id': st.session_state.active_lesson,
+                    'name': active_lesson_node.get('name'),
+                    'context_brief': active_lesson_node.find('Context').text,
+                    'element': [i.text for i in active_lesson_node.find('LessonElements').findall('Element')]
+                }
+                
+                st.session_state.chat_history.append({"role": "user", "content": user_input})
+                response = get_auditor_response(user_input, lesson_context)
 
-            # 1. PROCESS AI LOGIC (No saves here)
-            score_match = re.search(r"\[SCORE: (\d+)\]", response)
-            if score_match:
-                val = int(score_match.group(1))
-                if "lesson_scores" not in st.session_state: st.session_state.lesson_scores = {}
-                st.session_state.lesson_scores[st.session_state.active_lesson] = val
+                # 1. PROCESS AI LOGIC (No saves here)
+                score_match = re.search(r"\[SCORE: (\d+)\]", response)
+                if score_match:
+                    val = int(score_match.group(1))
+                    if "lesson_scores" not in st.session_state: st.session_state.lesson_scores = {}
+                    st.session_state.lesson_scores[st.session_state.active_lesson] = val
 
-            if "[VALIDATE: ALL]" in response:
-                st.session_state.archived_status[st.session_state.active_lesson] = True
+                if "[VALIDATE: ALL]" in response:
+                    st.session_state.archived_status[st.session_state.active_lesson] = True
 
-            # 2. UPDATE LOCAL STATE
-            clean_resp = re.sub(r"\[.*?\]", "", response).strip()
-            st.session_state.chat_history.append({"role": "model", "content": clean_resp})
-            st.session_state.all_histories[st.session_state.active_lesson] = st.session_state.chat_history
+                # 2. UPDATE LOCAL STATE
+                clean_resp = re.sub(r"\[.*?\]", "", response).strip()
+                st.session_state.chat_history.append({"role": "model", "content": clean_resp})
+                st.session_state.all_histories[st.session_state.active_lesson] = st.session_state.chat_history
 
-            # 3. CONSOLIDATED AUTOSAVE WITH SPINNER
-            with st.status("🔒 Uploading progress to system ...") as status:
-                save_audit_progress()
-                time.sleep(2) # The perceptual buffer for database commitment
-                status.update(label="✅ Progress Secure", state="complete", expanded=False)
-            
-            st.rerun()
+                # 3. CONSOLIDATED AUTOSAVE WITH SPINNER
+                with st.status("🔒 Uploading progress to system ...") as status:
+                    save_audit_progress()
+                    time.sleep(2) # The perceptual buffer for database commitment
+                    status.update(label="✅ Progress Secure", state="complete", expanded=False)
+                
+                st.rerun()
+
+        else:
+            # Fallback UI if the lesson ID is missing or mismatched
+            st.warning("Please select a valid lesson from the sidebar to begin.")        
 
     # --- COLUMN 3: STABILIZED CHECKLIST ---
     with col3:
