@@ -516,32 +516,24 @@ else:
             st.warning("Please select a valid lesson from the sidebar to begin.")        
 
     # --- COLUMN 3: STABILIZED CHECKLIST ---
+    # --- COLUMN 3: ENRICHED ELEMENT CHECKLIST ---
     with col3:
-        st.subheader("Lesson Elements")
+        st.subheader("Learning Objectives")
         element_list_node = active_lesson_node.find('LessonElements')
+        
         if element_list_node is not None:
-            element_nodes = element_list_node.findall("Element")
-        
-        # Check if the ENTIRE Lesson is already validated (True)
-        lesson_validated_globally = st.session_state.archived_status.get(st.session_state.active_lesson) == True
-        
-        for item_node in element_nodes:
-            text = item_node.text
-            
-            # FIX: Ensure we don't call .get() on a boolean 'True'
-            lesson_entry = st.session_state.archived_status.get(st.session_state.active_lesson, {})
-            
-            if lesson_validated_globally:
-                is_met = True
-            elif isinstance(lesson_entry, dict):
-                is_met = lesson_entry.get(text, False)
-            else:
-                is_met = False
+            for item_node in element_list_node.findall("Element"):
+                # Pull the new 'title' attribute
+                title = item_node.get('title', "Requirement")
+                detail = item_node.text
                 
-            # Color coding logic remains the same
-            bg_color = "#28a745" if is_met else "#ffc107"
-            st.markdown(f"""
-                <div style="background-color:{bg_color}; padding:15px; border-radius:5px; margin-bottom:10px; color:white; font-weight:bold;">
-                    {text}
-                </div>
-            """, unsafe_allow_html=True)
+                # Mastery logic check
+                is_met = st.session_state.archived_status.get(st.session_state.active_lesson) == True
+                bg_color = "#28a745" if is_met else "#334155" # Emerald for pass, Slate for pending
+
+                st.markdown(f"""
+                    <div style="background-color:{bg_color}; padding:12px; border-radius:8px; margin-bottom:10px; color:white; border-left: 5px solid #a855f7;">
+                        <div style="font-size:0.8rem; opacity:0.8;">💡 OBJECTIVE</div>
+                        <div style="font-weight:bold; font-size:1rem;">{title}</div>
+                    </div>
+                """, unsafe_allow_html=True)
