@@ -491,16 +491,29 @@ else:
             chat_container = st.container(height=500)
             for msg in st.session_state.chat_history:
                 ui_role = "assistant" if msg["role"] == "model" else "user"
+                
                 with chat_container.chat_message(ui_role):
-                    # Scan for the [[IMAGE:filename.jpg]] tag
-                    img_match = re.search(r"\[\[IMAGE:(.*?)\]\]", msg["content"])
-                    if img_match:
-                        clean_text = re.sub(r"\[\[IMAGE:.*?\]\]", "", msg["content"])
-                        st.write(clean_text)
-                        # Render the image from your assets folder
-                        st.image(f"assets/{img_match.group(1)}", use_container_width=True)
+                    content = msg["content"]
+                    
+                    # Check for the custom image tag [[IMAGE:filename.jpg]]
+                    if "[[" in content and "]]" in content:
+                        # 1. Extract the filename using regex
+                        match = re.search(r"\[\[IMAGE:(.*?)\]\]", content)
+                        if match:
+                            filename = match.group(1).strip()
+                            # 2. Clean the text by removing the tag
+                            clean_text = re.sub(r"\[\[IMAGE:.*?\]\]", "", content).strip()
+                            
+                            # 3. Render Text first, then the Image from your /assets folder
+                            st.write(clean_text)
+                            try:
+                                st.image(f"assets/{filename}", use_container_width=True)
+                            except Exception as e:
+                                st.error(f"Image Load Error: {filename} not found in /assets/")
+                        else:
+                            st.write(content)
                     else:
-                        st.write(msg["content"])
+                        st.write(content)
                     
             if user_input := st.chat_input("Your response ..."):
                 # We re-package the context for the evaluation turn
