@@ -200,7 +200,7 @@ if not st.session_state.get("authentication_status"):
     
     with col_r: # This is the right-hand column from your login screen
         st.header("System Access")
-        tab_register, tab_login = st.tabs(["Register New Account", "Resume Assessment"])
+        tab_register, tab_login = st.tabs(["Register New Account", "Resume Training"])
         
         with tab_login:
             # 1. Standard login widget
@@ -291,7 +291,7 @@ else:
     with st.sidebar:
         st.image(
         "https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline4.png", 
-        use_container_width=True
+        width="stretch"
         )
                         
         try:
@@ -384,7 +384,7 @@ else:
             # Icon Logic
             m_icon = "✅" if mod_complete else ("🔒" if not mod_unlocked else "📂")
             
-            if st.button(f"{m_icon} {mod_name}", key=f"side_{mod_id}", disabled=not mod_unlocked, use_container_width=True):
+            if st.button(f"{m_icon} {mod_name}", key=f"side_{mod_id}", disabled=not mod_unlocked, width="stretch"):
                 st.session_state.active_mod = mod_id
                 # Set first lesson of module as active
                 st.session_state.active_lesson = current_mod_lessons[0].get('id')
@@ -445,7 +445,7 @@ else:
                     display_label, 
                     key=button_key, 
                     type="primary" if is_active else "secondary", 
-                    use_container_width=True,
+                    width="stretch",
                     disabled=not is_unlocked  # This is the 'Mastery Gate'
                 ):
                     st.session_state.active_lesson = lesson_id
@@ -495,24 +495,25 @@ else:
                 with chat_container.chat_message(ui_role):
                     content = msg["content"]
                     
-                    # Check for the custom image tag [[IMAGE:filename.jpg]]
-                    if "[[" in content and "]]" in content:
-                        # 1. Extract the filename using regex
-                        match = re.search(r"\[\[IMAGE:(.*?)\]\]", content)
-                        if match:
-                            filename = match.group(1).strip()
-                            # 2. Clean the text by removing the tag
-                            clean_text = re.sub(r"\[\[IMAGE:.*?\]\]", "", content).strip()
-                            
-                            # 3. Render Text first, then the Image from your /assets folder
+                    # 1. Look for the tag with a more flexible regex
+                    img_match = re.search(r"\[\[IMAGE:\s*(.*?)\s*\]\]", content)
+                    
+                    if img_match:
+                        filename = img_match.group(1).strip()
+                        # 2. Clean the text - remove the entire bracketed tag including the brackets
+                        clean_text = re.sub(r"\[\[IMAGE:.*?\]\]", "", content).strip()
+                        
+                        # Render clean text
+                        if clean_text:
                             st.write(clean_text)
-                            try:
-                                st.image(f"assets/{filename}", use_container_width=True)
-                            except Exception as e:
-                                st.error(f"Image Load Error: {filename} not found in /assets/")
-                        else:
-                            st.write(content)
+                        
+                        # 3. Render Image using 2026 'width' syntax
+                        try:
+                            st.image(f"assets/{filename}", width="stretch")
+                        except Exception as e:
+                            st.error(f"File '{filename}' missing in /assets folder.")
                     else:
+                        # No image tag found, just write the content normally
                         st.write(content)
                     
             if user_input := st.chat_input("Your response ..."):
