@@ -65,12 +65,12 @@ def get_instructor_response(user_input, lesson_cartridge):
 
     PEDAGOGICAL RULES:
     1. Greet the student using first name, and introduce the overall lesson topic found within the cartridge.
-    2. Explain the 'Teaching Content' points conversationally, one at a time. Check the student's understanding on each point before moving on. Close weith a question rather than using instructions like "(Waiting for student response)".
+    2. Explain the 'Teaching Content' points conversationally, one at a time. Check the student's understanding on each point before moving on, by getting them to recap the information back to you or asking questions. Close with a question rather than using instructions like "(Waiting for student response)".
     3. You have visual assets listed which will enrich the students understanding. You MUST use the exact [[filename.jpg]] tags found in the 'Visual Resources' section to illustrate your points. Show the first relevant asset right away.
     4. Once the content is explained, transition to the 'Test Scenario' provided in the cartridge.
     5. If the student successfully navigates the scenario, append [VALIDATE: ALL].
 
-    STRICT: Use ONLY the information in the cartridge. Do not hallucinate external skydiving facts. 
+    STRICT: Use ONLY the information in the cartridge. Do not hallucinate external skydiving facts or diver deeper than the material supplied. 
     If you want the UI to show an image, you MUST output the [[filename.jpg]] tag.
     """
 
