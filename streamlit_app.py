@@ -266,7 +266,7 @@ if not st.session_state.get("authentication_status"):
                 if submit_reg:
                     if new_email and new_password and new_company:
                         # 1. THE SECURITY SEAL: Hash the password
-                        hashed_password = stauth.Hasher([new_password]).generate()[0]
+                        hashed_password = stauth.Hasher.hash(new_password)
                         
                         # 2. DATA COMMIT: Save with the new profile fields
                         db.collection("users").document(new_email).set({
