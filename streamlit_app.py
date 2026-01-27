@@ -55,32 +55,49 @@ def get_auditor_response(user_input, lesson_data):
     api_key = st.secrets.get("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
     
-    # 1. LOCAL VARIABLE MAPPING (Replacing c_name)
-    current_lesson_name = lesson_data.get('name', 'this lesson')
+    # 1. ENHANCED PERSONALIZATION & XML CONTEXT
+    current_lesson = lesson_data.get('name', 'this lesson')
+    # Pulling the <Context> field you mentioned
+    lesson_intent = lesson_data.get('context_brief', 'General safety training.') 
+    user_name = st.session_state.get("name", "Student")
     profile = st.session_state.get("u_profile", "A student eager to learn.")
     
     # 2. ENRICHED RAG CONTENT
-    # This pulls the full Element.text for the AI to teach from
     rag_content = "\n".join([f"- {e['title']}: {e['text']}" for e in lesson_data.get('elements_full', [])])
-    resource_list = lesson_data.get('resource_list', [])
+    available_assets = lesson_data.get('resource_list', [])
 
     # 3. THE "STAY IN THE BOOK" PROMPT
-    base_prompt = (
-        f"You are the SkyHigh Flight Instructor teaching: {current_lesson_name}. "
-        f"STUDENT PROFILE: {profile}. Relate technical details to these goals.\n\n"
-        f"OFFICIAL TEXTBOOK CONTENT:\n{rag_content}\n\n"
-        f"AVAILABLE MEDIA: {resource_list}\n\n"
-        f"STRICT RULES:\n"
-        f"1. ONLY teach using the 'OFFICIAL TEXTBOOK CONTENT'. Do not introduce external topics (e.g., aerodynamics).\n"
-        f"2. Use [[IMAGE:filename]] to show diagrams when discussing specific components.\n"
-        f"3. Append [VALIDATE: ALL] ONLY when the student masters the Application Scenario."
-    )
+    base_prompt = f"""
+    You are the SkyHigh Parachuting Master Instructor. Your tone is friendly and professional. 
+    STUDENT NAME: {user_name}
+    CURRENT MISSION: {current_lesson}
+    LESSON INTENT: {lesson_intent}
+    STUDENT GOAL/CONTEXT: {profile}.
+    
+    LEARNING OBJECTIVES (THE SOURCE OF TRUTH):
+    {rag_content}
+
+    PEDAGOGICAL FRAMEWORK (CDAA Method):
+    1. CONFIRM: Address {user_name} by name. State the Lesson Intent: "{lesson_intent}". Relate it to their goal: "{profile}".
+    2. DEMONSTRATE: Use [[IMAGE:filename]] from {available_assets} to show concepts. 
+    3. APPLY: Present the 'Application Scenario' once all elements have been covered. Ask {user_name} how they would handle it.
+    4. ASSESS: Append [VALIDATE: ALL] only after mastery.
+
+    STRICT RULES:
+    - RAG ONLY: Use ONLY the provided Learning Objectives. Do not introduce outside info.
+    - Deliver ONE element at a time. 
+    - Encourage 'teach back' for myelination.
+    - Keep the student on topic, politely but firmly.
+
+    IMPORTANT!
+    You must append [VALIDATE: ALL] once the student has passed the lesson - this allows them to proceed.
+    """
 
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
     if user_input == "INITIATE_HANDSHAKE":
         # Grounding the handshake in the actual Lesson Name
-        full_call = f"{base_prompt}\n\nUSER: Please introduce the lesson '{current_lesson_name}' and start with the first element."
+        full_call = f"{base_prompt}\n\nUSER: Please introduce the lesson '{current_lesson}' and start with the first element."
         response = model.generate_content(full_call)
     else:
         gemini_history = []
@@ -195,7 +212,7 @@ if not st.session_state.get("authentication_status"):
     # Render the Login UI
     col_l, col_r = st.columns([1, 1], gap="large")
     with col_l:
-        st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-welcome.png")
+        st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2welcome2.png")
         
     
     with col_r: # This is the right-hand column from your login screen
@@ -241,8 +258,6 @@ if not st.session_state.get("authentication_status"):
                 new_company = st.text_input("Company Name")
                 new_name = st.text_input("Full Name")
                 new_password = st.text_input("Password", type="password")
-                st.markdown("---")
-                st.write("🌍 **Your Learning Profile**")
                 u_experience = st.text_area("What is your current experience level in this field?", placeholder="e.g., Total beginner...")
                 u_aspiration = st.text_area("What do you hope to achieve with this training?", placeholder="e.g., I want to become a solo jumper...")
                         
