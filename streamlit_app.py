@@ -16,7 +16,6 @@ def local_css(file_name):
 
 local_css("style.css")
 
-
 # --- 1. TACTICAL SECRET & DB LOADER (MAINTAINED) ---
 try:
     credentials_info = st.secrets["gcp_service_account_firestore"]
@@ -49,77 +48,50 @@ if "all_histories" not in st.session_state:
     # Structure: { "Lesson-ID": [ {role, content}, ... ] }
     st.session_state.all_histories = {}
 
-
-# --- 4. THE AI AUDITOR ENGINE (STABILIZED) ---
-def get_auditor_response(user_input, lesson_data):
-    # Variables for Personalization
+# --- 4. THE AI INSTRUCTOR ENGINE (CARTRIDGE OPTIMIZED) ---
+def get_instructor_response(user_input, lesson_cartridge):
+    # 1. Personalization Hydration
     user_name = st.session_state.get("name", "Student")
     profile = st.session_state.get("u_profile", "A student eager to learn.")
     
-    # Building the Grounded Syllabus
-    # Inside get_auditor_response...
-    current_lesson = lesson_data.get('name')
-    # Ensure this matches the key 'elements_full' from your new dictionary
-    syllabus_text = "\n".join([f"- {e['title']}: {e['text']}" for e in lesson_data['elements_full']])
-    # Ensure this matches 'resource_list'
-    asset_manifest = "\n".join(lesson_data.get('resource_list', []))
-
+    # 2. The Semantic Prompt
+    # We pass the raw XML text block directly as the 'Cartridge'
     base_prompt = f"""
-    You are the SkyHigh Master Instructor. 
+    You are the SkyHigh Master Instructor, an expert skydiving coach. 
     STUDENT: {user_name} (Goal: {profile})
-    SYLLABUS SOURCE OF TRUTH:
-    {syllabus_text}
 
-    LESSON RESOURCE IMAGE LIBRARY (ONLY USE THESE FILENAMES): {asset_manifest}
+    LESSON CARTRIDGE (Your Source of Truth):
+    {lesson_cartridge}
 
     PEDAGOGICAL RULES (CDAA METHOD):
-    1. CONFIRM: State "We are covering {lesson_data['name']}." Explain ONLY the first element title/text. 
-    2. DEMONSTRATE: Immediately use [[IMAGE:filename]] from the resource library list to show the first element.
-    3. APPLY: After elements are explained, use this exact Scenario: "{lesson_data['scenario']}".
-    4. ASSESS: Only upon mastery, append [VALIDATE: ALL].
+    1. CONFIRM: Greet the student using first name, and introduce the lesson topic found in the cartridge.
+    2. DEMONSTRATE: Explain the 'Teaching Content' points conversationally. You MUST use the exact [[filename.jpg]] tags found in the 'Visual Resources' section to illustrate your points.
+    3. APPLY: Once the content is explained, transition to the 'Test Scenario' provided in the cartridge.
+    4. ASSESS: If the student successfully navigates the scenario, append [VALIDATE: ALL] and [SCORE: 100].
 
-    STRICT: Base answers ONLY on the Source of Truth. Deliver one element at a time.
+    STRICT: Use ONLY the information in the cartridge. Do not hallucinate external skydiving facts. 
+    If you want the UI to show an image, you MUST output the [[filename.jpg]] tag.
     """
 
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
-    # Format history for Gemini
-    # PRO TIP: Add this role-cleaner to your get_auditor_response
+    # 3. History Sync
     gemini_history = []
     for msg in st.session_state.chat_history:
-        # Force roles to be exactly what Gemini expects
         role = "model" if msg["role"] == "model" else "user"
         gemini_history.append({"role": role, "parts": [{"text": msg["content"]}]})
 
+    # 4. Execution Logic
     if user_input == "INITIATE_HANDSHAKE":
-        full_call = (
-            f"{base_prompt}\n\n"
-            f"USER: {user_name} is here for the session. Address them by name, "
-            f"introduce '{current_lesson}', and begin with ONLY the first element."
-        )
+        full_call = f"{base_prompt}\n\nUSER: {user_name} is ready for training. Begin the lesson."
         response = model.generate_content(full_call)
     else:
-        # Resume existing chat history but anchor it to the syllabus
         chat = model.start_chat(history=gemini_history)
-        
-        # We pass the prompt as context alongside the user's input to keep it stateful
-        context_injection = f"SYSTEM INSTRUCTION: Stick to the Syllabus. Deliver one element at a time. \nUSER: {user_input}"
+        # We inject the base_prompt as a 'System Instruction' on every turn to prevent drift
+        context_injection = f"SYSTEM INSTRUCTION: Stick to the Lesson Cartridge and the CDAA method. \nUSER: {user_input}"
         response = chat.send_message(context_injection)
         
     return response.text
-
-# Updated calculate_live_score (Line 101)
-def calculate_live_score(root, archived_status, lesson_scores):
-    total_weighted_points = 0
-    for lesson in root.findall('.//Lesson'):
-        lesson_id = lesson.get('id')
-        # Look for Multiplier directly as a child of Lesson
-        m_node = lesson.find('Multiplier')
-        multiplier = int(m_node.text) if m_node is not None else 1
-        
-        if archived_status.get(lesson_id) == True:
-            total_weighted_points += 100 * multiplier
-    return total_weighted_points
 
 def get_user_credentials():
     creds = {"usernames": {}}
@@ -301,83 +273,57 @@ else:
 
     # Render the Assess UI    
 
-    # SIDEBAR: The Speedometer & Nav
+    # --- SIDEBAR: PROGRESS & TELEMETRY ---
     with st.sidebar:
-        st.image(
-        "https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline4.png", 
-        width="stretch"
-        )
-                        
-        try:
-            # 1. Calculation Safety
-            total_lessons = root.findall('.//Lesson')
-            max_score = 0
-            for lesson in total_lessons:
-                m_node = lesson.find('Multiplier')
-                max_score += (int(m_node.text) if m_node is not None else 1) * 100
-            
-            archived = st.session_state.get("archived_status", {})
-            scores = st.session_state.get("lesson_scores", {})
-            live_score = calculate_live_score(root, archived, scores)
-            
-            # Ensure readiness_pct is a clean number for ECharts
-            readiness_pct = round((live_score / max_score) * 100, 1) if max_score > 0 else 0.0
-
-            unix_key = int(time.time())
-
-            # 2. Hardened HUD Config
-            gauge_option = {
-                "series": [{
-                    "type": "gauge",
-                    "startAngle": 190,
-                    "endAngle": -10,
-                    "radius": "100%", 
-                    "center": ["50%", "85%"], # Pivot point pushed up to avoid clipping
-                    "pointer": {"show": False},
-                    "itemStyle": {
-                        "color": "#a855f7", 
-                        "shadowBlur": 15, 
-                        "shadowColor": "rgba(168, 85, 247, 0.6)"
-                    },
-                    "progress": {"show": True, "roundCap": True, "width": 15},
-                    "axisLine": {
-                        "lineStyle": {
-                            "width": 15, 
-                            "color": [[1, "rgba(255, 255, 255, 0.05)"]]
-                        }
-                    },
-                    "axisTick": {"show": False},
-                    "splitLine": {"show": False},
-                    "axisLabel": {"show": False},
-                    "detail": {
-                        "offsetCenter": [0, "-15%"], 
-                        "formatter": "{value}%",
-                        "color": "#1e293b",
-                        "fontSize": "1.5rem",
-                        "fontWeight": "bold",
-                        "fontFamily": "Open Sans, sans-serif"
-                    },
-                    "data": [{"value": readiness_pct}]
-                }]
-            }
-
-            # 3. Force Render with unique key
-            st_echarts(
-                options=gauge_option, 
-                height="150px", 
-                key=f"gauge_{unix_key}" 
-            )
-            st.markdown(f"<p style='text-align: center; margin-top:-30px;'>{live_score} / {max_score} PTS</p>", unsafe_allow_html=True)
-
-        except Exception as e:
-            # This will tell you exactly if a variable name is missing
-            st.error(f"HUD Telemetry Error: {e}")
+        st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline4.png", use_container_width=True)
         
-              
-        st.caption(f"USER: {st.session_state.get('name', 'Unknown User')}")
-        st.caption(f"COMPANY: {st.session_state.get('company', 'Company Name Not Listed')}")       
+        # 1. Calculation: Percentage of Cartridges Completed
+        total_lessons = root.findall('.//Lesson')
+        total_count = len(total_lessons)
         
-        st.subheader("Modules:")
+        # Count how many lesson IDs are marked True in archived_status
+        completed_count = sum(1 for l in total_lessons if st.session_state.archived_status.get(l.get('id')) == True)
+        
+        # Simple Progress Percentage
+        readiness_pct = round((completed_count / total_count) * 100, 1) if total_count > 0 else 0.0
+
+        # 2. Hardened HUD Config (ECharts Gauge)
+        gauge_option = {
+            "series": [{
+                "type": "gauge",
+                "startAngle": 190,
+                "endAngle": -10,
+                "radius": "100%", 
+                "center": ["50%", "85%"],
+                "pointer": {"show": False},
+                "itemStyle": {
+                    "color": "#a855f7", 
+                    "shadowBlur": 15, 
+                    "shadowColor": "rgba(168, 85, 247, 0.6)"
+                },
+                "progress": {"show": True, "roundCap": True, "width": 15},
+                "axisLine": {"lineStyle": {"width": 15, "color": [[1, "rgba(255, 255, 255, 0.05)"]]}},
+                "axisTick": {"show": False},
+                "splitLine": {"show": False},
+                "axisLabel": {"show": False},
+                "detail": {
+                    "offsetCenter": [0, "-15%"], 
+                    "formatter": "{value}%",
+                    "color": "#1e293b",
+                    "fontSize": "1.5rem",
+                    "fontWeight": "bold"
+                },
+                "data": [{"value": readiness_pct}]
+            }]
+        }
+
+        st_echarts(options=gauge_option, height="150px", key="sidebar_gauge")
+        st.markdown(f"<p style='text-align: center; margin-top:-30px;'>{completed_count} / {total_count} LESSONS COMPLETE</p>", unsafe_allow_html=True)
+        
+        st.divider() #
+        
+        # 3. Module Selection
+        st.subheader("Training Modules")
         modules = root.findall('Module')
         for idx, mod_node in enumerate(modules):
             mod_id = mod_node.get('id')
@@ -428,7 +374,8 @@ else:
                 rendered_ids.add(lesson_id)
                 
                 lesson_name = lesson.get('name')
-                
+                lesson_desc = lesson.get('desc', "No description available.")
+
                 # 1. MASTERY & ACTIVE STATUS
                 is_complete = st.session_state.archived_status.get(lesson_id) == True
                 is_active = st.session_state.active_lesson == lesson_id
@@ -451,7 +398,7 @@ else:
                 else:
                     icon = "📖"
 
-                display_label = f"{icon} {lesson_name}"
+                display_label = f"{icon} {lesson_name} : {lesson_desc}"
                 button_key = f"btn_{active_mod_id}_{lesson_id}"
                 
                 # 4. RENDER BUTTON
@@ -471,118 +418,75 @@ else:
                         st.session_state.needs_handshake = False
                     st.rerun()
 
-                # 5. UX FEEDBACK: Give them a hint if they try to click a locked lesson
-                # (Streamlit handles the 'disabled' look, but a toast adds that 'explainer' feel)
+                
 
-    # --- COLUMN 2: THE RE-ENGINEERED 2026 RENDERER ---
-    # --- COLUMN 2: THE UNIFIED DATA BRIDGE ---
+    
+    # --- COLUMN 2: THE SEMANTIC MENTOR (REFACTORED) ---
     with col2:
         active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
         
         if active_lesson_node is not None:
-            # SINGLE SOURCE OF TRUTH: Bind all data here once per rerun
-            elements = [
-                {'title': e.get('title'), 'text': e.text} 
-                for e in active_lesson_node.find('LessonElements').findall('Element')
-            ]
-            
-            # PRO TIP: Map the filename to the description so the AI knows 'why' to use it
-            resources = [
-                f"{r.text}: [[IMAGE:{r.get('file')}]]" 
-                for r in active_lesson_node.find('LessonResources').findall('Resource')
-            ]
+            # 1. THE CARTRIDGE EXTRACTION
+            # We pull the raw text (Teaching, Visuals, Scenario) in one go
+            lesson_cartridge = active_lesson_node.text.strip()
+            lesson_name = active_lesson_node.get('name')
 
-            lesson_data_for_ai = {
-                'name': active_lesson_node.get('name'),
-                'elements_full': elements,
-                'resource_list': resources,
-                'scenario': active_lesson_node.find('ApplicationScenario').text
-            }
-
-            # --- A. THE HANDSHAKE (Now perfectly synced) ---
+            # 2. THE HANDSHAKE (Cartridge-Based)
             if st.session_state.get("needs_handshake", False):
-                response = get_auditor_response("INITIATE_HANDSHAKE", lesson_data_for_ai)
-                clean_resp = re.sub(r"\[.*?\]", "", response).strip()
+                # Pass the raw text lump directly to the smart engine
+                response = get_instructor_response("INITIATE_HANDSHAKE", lesson_cartridge)
+                
+                # Catch any initial visual tag
+                img_match = re.search(r"\[\[(.*?\.jpg|.*?\.png)\]\]", response)
+                if img_match:
+                    st.session_state.active_visual = img_match.group(1)
+                
+                # Clean and initialize history
+                clean_resp = re.sub(r"\[.*?\]", "", response).replace("]", "").strip()
                 st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
                 st.session_state.needs_handshake = False
                 st.rerun()
 
-            # 3. CHAT DISPLAY (CLEAN RENDER)
-            st.subheader(f"🎯 LESSON: {lesson_data_for_ai['name']}")
+            # 3. CHAT DISPLAY (Persistent & Clean)
+            st.subheader(f"🎯 LESSON: {lesson_name}")
             chat_container = st.container(height=500)
             
             for msg in st.session_state.chat_history:
                 ui_role = "assistant" if msg["role"] == "model" else "user"
                 with chat_container.chat_message(ui_role):
-                    content = msg["content"]
-                    
-                    # A. Detect the Image Tag
-                    img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", content)
-                    
-                    # B. CLEAN AND RENDER TEXT (Using st.write for Markdown)
-                    # This wipes the tag and any stray brackets seen in your images
-                    clean_text = re.sub(r"\[\[.*?\]\]", "", content)
-                    clean_text = clean_text.replace("]", "").strip()
-                    
-                    if clean_text:
-                        st.write(clean_text)
+                    # UI is kept clean; tags are stripped because they render in Col 3
+                    st.write(msg["content"])
 
-                    # C. RENDER IMAGE (C2-Style Discrete Block)
-                    if img_match:
-                        filename = img_match.group(1).strip()
-                        try:
-                            st.image(f"assets/{filename}", width="stretch")
-                        except:
-                            st.error(f"Media Error: {filename} not found in /assets/")
-                    
+            # 4. USER INPUT & RESPONSE PROCESSING
             if user_input := st.chat_input("Your response ...", key=f"chat_input_{st.session_state.active_lesson}"):
-                # --- ENHANCED DATA BINDING ---
-                active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
-
-                if active_lesson_node is not None:
-                    # 1. Map the Lesson Elements (The RAG Source)
-                    # We pull the 'title' for the syllabus and the 'text' for the AI's deep knowledge
-                    elements = [
-                        {'title': e.get('title'), 'text': e.text} 
-                        for e in active_lesson_node.find('LessonElements').findall('Element')
-                    ]
-                    
-                    # 2. Map the Lesson Resources (The Image Backpack)
-                    resources = [
-                        f"{r.text}: [[IMAGE:{r.get('file')}]]" 
-                        for r in active_lesson_node.find('LessonResources').findall('Resource')
-                    ]
-
-                    lesson_data_for_ai = {
-                        'name': active_lesson_node.get('name'),
-                        'elements_full': elements,
-                        'resource_list': resources,
-                        'scenario': active_lesson_node.find('ApplicationScenario').text
-                    }
-                
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
-                response = get_auditor_response(user_input, lesson_data_for_ai)
+                
+                # Get response using the single cartridge source
+                response = get_instructor_response(user_input, lesson_cartridge)
 
-                # 1. PROCESS AI LOGIC (No saves here)
-                score_match = re.search(r"\[SCORE: (\d+)\]", response)
-                if score_match:
-                    val = int(score_match.group(1))
-                    if "lesson_scores" not in st.session_state: st.session_state.lesson_scores = {}
-                    st.session_state.lesson_scores[st.session_state.active_lesson] = val
+                # --- THE VISUAL BRIDGE ---
+                # Catch visual tags to update Column 3
+                img_match = re.search(r"\[\[(.*?\.jpg|.*?\.png)\]\]", response)
+                if img_match:
+                    st.session_state.active_visual = img_match.group(1)
 
+                # --- THE LOGIC GATE ---
+                # Handle mastery validation and scoring
                 if "[VALIDATE: ALL]" in response:
                     st.session_state.archived_status[st.session_state.active_lesson] = True
+                
+                score_match = re.search(r"\[SCORE: (\d+)\]", response)
+                if score_match:
+                    st.session_state.lesson_scores[st.session_state.active_lesson] = int(score_match.group(1))
 
-                # 2. UPDATE LOCAL STATE
-                clean_resp = re.sub(r"\[.*?\]", "", response).strip()
+                # --- UI CLEANUP & SAVE ---
+                clean_resp = re.sub(r"\[.*?\]", "", response).replace("]", "").strip()
                 st.session_state.chat_history.append({"role": "model", "content": clean_resp})
                 st.session_state.all_histories[st.session_state.active_lesson] = st.session_state.chat_history
-
-                # 3. CONSOLIDATED AUTOSAVE WITH SPINNER
-                with st.status("🔒 Uploading progress to system ...") as status:
+                
+                with st.status("🔒 Securing Training Data...") as status:
                     save_audit_progress()
-                    time.sleep(2) # The perceptual buffer for database commitment
-                    status.update(label="✅ Progress Secure", state="complete", expanded=False)
+                    status.update(label="✅ Progress Secure", state="complete")
                 
                 st.rerun()
 
@@ -591,24 +495,21 @@ else:
             st.warning("Please select a valid lesson from the sidebar to begin.")        
 
     # --- COLUMN 3: STABILIZED CHECKLIST ---
-    # --- COLUMN 3: ENRICHED ELEMENT CHECKLIST ---
     with col3:
-        st.subheader("Content for this Lesson")
-        element_list_node = active_lesson_node.find('LessonElements')
+        st.subheader("Visual Reference")
         
-        if element_list_node is not None:
-            for item_node in element_list_node.findall("Element"):
-                # Pull the new 'title' attribute
-                title = item_node.get('title', "Requirement")
-                detail = item_node.text
+        # Check if the Instructor has "passed" an image to the deck
+        active_img = st.session_state.get("active_visual")
+        
+        if active_img:
+            try:
+                # We use use_container_width to ensure it fits the 2026 UI spec
+                st.image(f"assets/{active_img}", use_container_width=True)
                 
-                # Mastery logic check
-                is_met = st.session_state.archived_status.get(st.session_state.active_lesson) == True
-                bg_color = "#28a745" if is_met else "#334155" # Emerald for pass, Slate for pending
-
-                st.markdown(f"""
-                    <div style="background-color:{bg_color}; padding:12px; border-radius:8px; margin-bottom:10px; color:white; border-left: 5px solid #a855f7;">
-                        <div style="font-size:0.8rem; opacity:0.8;">💡 LEARNING OBJECTIVE</div>
-                        <div style="font-weight:bold; font-size:1rem;">{title}</div>
-                    </div>
-                """, unsafe_allow_html=True)
+                # Optional: Add a caption to help the student focus
+                st.caption(f"Currently viewing: {active_img}")
+            except:
+                st.warning(f"Static Asset Sync: {active_img} not found in /assets/")
+        else:
+            # Initial State: A placeholder or helpful hint
+            st.info("Visual aids will appear here automatically as the Instructor introduces them.")
