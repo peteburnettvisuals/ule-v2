@@ -62,7 +62,7 @@ def get_auditor_response(user_input, lesson_data):
     # Ensure this matches the key 'elements_full' from your new dictionary
     syllabus_text = "\n".join([f"- {e['title']}: {e['text']}" for e in lesson_data['elements_full']])
     # Ensure this matches 'resource_list'
-    asset_manifest = ", ".join(lesson_data.get('resource_list', []))
+    asset_manifest = "\n".join(lesson_data.get('resource_list', []))
 
     base_prompt = f"""
     You are the SkyHigh Master Instructor. 
@@ -70,11 +70,11 @@ def get_auditor_response(user_input, lesson_data):
     SYLLABUS SOURCE OF TRUTH:
     {syllabus_text}
 
-    IMAGE BACKPACK (ONLY USE THESE FILENAMES): {asset_manifest}
+    LESSON RESOURCE IMAGE LIBRARY (ONLY USE THESE FILENAMES): {asset_manifest}
 
     PEDAGOGICAL RULES (CDAA METHOD):
-    1. CONFIRM: State "We are covering {lesson_data['name']}." Deliver ONLY the first element title/text. 
-    2. DEMONSTRATE: Immediately use [[IMAGE:filename]] from the backpack list to show the first element.
+    1. CONFIRM: State "We are covering {lesson_data['name']}." Explain ONLY the first element title/text. 
+    2. DEMONSTRATE: Immediately use [[IMAGE:filename]] from the resource library list to show the first element.
     3. APPLY: After elements are explained, use this exact Scenario: "{lesson_data['scenario']}".
     4. ASSESS: Only upon mastery, append [VALIDATE: ALL].
 
