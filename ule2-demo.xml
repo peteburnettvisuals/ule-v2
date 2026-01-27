@@ -20,7 +20,7 @@
 			 - The student is at the dropzone, and they are given a new parachute. What should they check for, and where will they find it?
         </Lesson>
 		
-        <Lesson id="CAT-GEAR-02" name="Altimeter & Height Windows" desc="Tools and techniques for descent management">
+        <Lesson id="CAT-GEAR-02" name="Altimeter &amp; Height Windows" desc="Tools and techniques for descent management">
             Teaching Content for this lesson:
 			- Check Cadence: We need to be checking our altimeter every 5 seconds during freefall
 			- Correct Setting For Drop Zone: Always set Altimeter so that zero matches dropzone elevation.
