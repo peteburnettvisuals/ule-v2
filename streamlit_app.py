@@ -84,8 +84,10 @@ def get_auditor_response(user_input, lesson_data):
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
     # Format history for Gemini
+    # PRO TIP: Add this role-cleaner to your get_auditor_response
     gemini_history = []
     for msg in st.session_state.chat_history:
+        # Force roles to be exactly what Gemini expects
         role = "model" if msg["role"] == "model" else "user"
         gemini_history.append({"role": role, "parts": [{"text": msg["content"]}]})
 
@@ -532,7 +534,7 @@ with col2:
                     except:
                         st.error(f"Media Error: {filename} not found in /assets/")
                     
-            if user_input := st.chat_input("Your response ..."):
+            if user_input := st.chat_input("Your response ...", key=f"chat_input_{st.session_state.active_lesson}"):
                 # --- ENHANCED DATA BINDING ---
                 active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
 
