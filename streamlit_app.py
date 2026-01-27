@@ -510,16 +510,22 @@ else:
         active_img = st.session_state.get("active_visual")
         
         if active_img:
+            # 1. Start the 'try' block to catch missing file errors
             try:
                 st.image(f"assets/{active_img}", use_container_width=True)
-                # Inline styling for the light-grey #cbd5e1 caption
+                
+                # 2. Apply the Inline Style Caption (The Sledgehammer)
                 st.markdown(f"""
-                    <p style='color: #cbd5e1; font-size: 0.8rem; font-style: italic; margin-top: -5px; opacity: 0.8;'>
-                        Ref: {active_img}
-                    </p>
+                    <div style='margin-top: -10px;'>
+                        <span style='color: #cbd5e1 !important; font-size: 0.8rem; font-style: italic; opacity: 0.7;'>
+                            🛰️ Currently viewing: {active_img}
+                        </span>
+                    </div>
                 """, unsafe_allow_html=True)
-            except:
-                st.warning(f"Static Asset Sync: {active_img} not found.")
+                
+            # 3. Handle the error if the file doesn't exist
+            except Exception as e:
+                st.warning(f"Static Asset Sync: {active_img} not found in /assets/")
         else:
             # 2. The 'Ghost Placeholder' instead of st.info
             # This keeps the UI light and professional
