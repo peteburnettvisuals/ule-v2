@@ -505,7 +505,7 @@ else:
     with col3:
         # 1. Spacer for Vertical Alignment with Col 2 Subheader
         st.markdown("<div style='margin-top: 3.85rem;'></div>", unsafe_allow_html=True)
-        st.subheader("Visual Reference")
+        st.subheader("Visual References for this Lesson")
         
         active_img = st.session_state.get("active_visual")
         
