@@ -64,7 +64,7 @@ def get_auditor_response(user_input, lesson_data):
     
     # 2. ENRICHED RAG CONTENT
     rag_content = "\n".join([f"- {e['title']}: {e['text']}" for e in lesson_data.get('elements_full', [])])
-    available_assets = lesson_data.get('resource_list', [])
+    manifest = ", ".join(lesson_data.get('resource_list', []))
 
     # 3. THE "STAY IN THE BOOK" PROMPT
     base_prompt = f"""
@@ -77,9 +77,14 @@ def get_auditor_response(user_input, lesson_data):
     LEARNING OBJECTIVES (THE SOURCE OF TRUTH):
     {rag_content}
 
+    IMAGE BACKPACK (ONLY USE THESE FILENAMES):
+    [{manifest}]    
+
     PEDAGOGICAL FRAMEWORK (CDAA Method):
     1. CONFIRM: Address {user_name} by their first name. State the Lesson Intent: "{lesson_intent}". Relate it to their goal: "{profile}".
-    2. DEMONSTRATE: Please append resources from this list: {available_assets} to illustrate concepts. Append [[IMAGE:filename]] to allow the system to enrich your response.
+    2. DEMONSTRATE: You MUST use the syntax [[IMAGE:filename]] using a name from the BACKPACK list above. 
+        - Example: "Look at the rig here: [[IMAGE:CAT-GEAR-01_chute_overview.jpg]]"
+        - CRITICAL: Never use empty brackets. If you don't have a filename, don't use the tag.
     3. APPLY: Present the 'Application Scenario' once all elements have been covered. Ask {user_name} how they would handle it.
     4. ASSESS: Append [VALIDATE: ALL] only after mastery.
 
