@@ -78,13 +78,13 @@ def get_auditor_response(user_input, lesson_data):
     {rag_content}
 
     PEDAGOGICAL FRAMEWORK (CDAA Method):
-    1. CONFIRM: Address {user_name} by name. State the Lesson Intent: "{lesson_intent}". Relate it to their goal: "{profile}".
-    2. DEMONSTRATE: Use [[IMAGE:filename]] from {available_assets} to show concepts. 
+    1. CONFIRM: Address {user_name} by their first name. State the Lesson Intent: "{lesson_intent}". Relate it to their goal: "{profile}".
+    2. DEMONSTRATE: Please append resources from this list: {available_assets} to illustrate concepts. Append [[IMAGE:filename]] to allow the system to enrich your response.
     3. APPLY: Present the 'Application Scenario' once all elements have been covered. Ask {user_name} how they would handle it.
     4. ASSESS: Append [VALIDATE: ALL] only after mastery.
 
     STRICT RULES:
-    - RAG ONLY: Use ONLY the provided Learning Objectives. Do not introduce outside info.
+    - RAG ONLY: Use ONLY the provided Learning Objectives. The lesson intent is for context only - the learning objectives are what you are teaching. Do not introduce outside info.
     - Deliver ONE element at a time. 
     - Encourage 'teach back' for myelination.
     - Keep the student on topic, politely but firmly.
@@ -505,30 +505,32 @@ else:
 
             chat_container = st.container(height=500)
             for msg in st.session_state.chat_history:
+                # Gemini 'model' maps to Streamlit 'assistant'
                 ui_role = "assistant" if msg["role"] == "model" else "user"
                 
                 with chat_container.chat_message(ui_role):
                     content = msg["content"]
                     
-                    # 1. Look for the tag with a more flexible regex
-                    img_match = re.search(r"\[\[IMAGE:\s*(.*?)\s*\]\]", content)
+                    # Use regex to find the filename inside the tag
+                    img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", content)
                     
                     if img_match:
                         filename = img_match.group(1).strip()
-                        # 2. Clean the text - remove the entire bracketed tag including the brackets
-                        clean_text = re.sub(r"\[\[IMAGE:.*?\]\]", "", content).strip()
+                        # Clean the text by removing the tag entirely
+                        clean_text = re.sub(r"\[\[.*?\]\]", "", content).strip()
                         
-                        # Render clean text
+                        # A. Render the Instructor's explanation
                         if clean_text:
                             st.write(clean_text)
                         
-                        # 3. Render Image using 2026 'width' syntax
+                        # B. Render the Image as a discrete block (C2 Style)
+                        # Using the 2026 'stretch' syntax to clear your logs
                         try:
-                            st.image(f"assets/{filename}", width="stretch")
-                        except Exception as e:
-                            st.error(f"File '{filename}' missing in /assets folder.")
+                            st.image(f"assets/{filename}", width="stretch", caption=f"Reference: {filename}")
+                        except Exception:
+                            st.error(f"Media Sync Error: {filename} not found.")
                     else:
-                        # No image tag found, just write the content normally
+                        # Normal text message
                         st.write(content)
                     
             if user_input := st.chat_input("Your response ..."):
