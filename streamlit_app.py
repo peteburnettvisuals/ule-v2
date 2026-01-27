@@ -83,21 +83,25 @@ def get_auditor_response(user_input, lesson_data):
 
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
+    # Format history for Gemini
+    gemini_history = []
+    for msg in st.session_state.chat_history:
+        role = "model" if msg["role"] == "model" else "user"
+        gemini_history.append({"role": role, "parts": [{"text": msg["content"]}]})
+
     if user_input == "INITIATE_HANDSHAKE":
-        # Grounding the handshake in the actual Lesson Name and Persona
         full_call = (
             f"{base_prompt}\n\n"
-            f"USER: {user_name} is ready. Please greet them warmly by name, "
-            f"introduce the lesson '{current_lesson}', and explain the first element."
+            f"USER: {user_name} is here for the session. Address them by name, "
+            f"introduce '{current_lesson}', and begin with ONLY the first element."
         )
         response = model.generate_content(full_call)
     else:
-        gemini_history = []
-        for msg in st.session_state.chat_history:
-            gemini_history.append({"role": msg["role"], "parts": [{"text": msg["content"]}]})
-        
+        # Resume the existing chat history
         chat = model.start_chat(history=gemini_history)
-        response = chat.send_message(f"Training Context: {base_prompt}\n\nUser Input: {user_input}")
+        # Don't re-send the whole prompt, just the user input. 
+        # The history already contains the context from the handshake.
+        response = chat.send_message(user_input)
         
     return response.text
 
@@ -467,70 +471,66 @@ else:
                 # 5. UX FEEDBACK: Give them a hint if they try to click a locked lesson
                 # (Streamlit handles the 'disabled' look, but a toast adds that 'explainer' feel)
 
-    # --- COLUMN 2: THE AUDIT CHAT (Surgical Fix) ---
-    with col2:
-        active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
+    # --- COLUMN 2: THE RE-ENGINEERED 2026 RENDERER ---
+with col2:
+    active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
+    
+    if active_lesson_node is not None:
+        # 1. DATA BINDING (MUST BE FIRST)
+        # This resolves the Pylance 'undefined' error for the handshake
+        elements = [
+            {'title': e.get('title'), 'text': e.text} 
+            for e in active_lesson_node.find('LessonElements').findall('Element')
+        ]
+        resources = [
+            r.get('file') 
+            for r in active_lesson_node.find('LessonResources').findall('Resource')
+        ]
+
+        lesson_data_for_ai = {
+            'name': active_lesson_node.get('name'),
+            'elements_full': elements,
+            'resource_list': resources,
+            'scenario': active_lesson_node.find('ApplicationScenario').text
+        }
+
+        # 2. THE HANDSHAKE
+        if st.session_state.get("needs_handshake", False):
+            response = get_auditor_response("INITIATE_HANDSHAKE", lesson_data_for_ai)
+            # Remove internal logic tags like [SCORE: 0]
+            clean_resp = re.sub(r"\[.*?\]", "", response).strip()
+            
+            st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
+            st.session_state.needs_handshake = False
+            st.rerun()
+
+        # 3. CHAT DISPLAY (CLEAN RENDER)
+        st.subheader(f"🎯 LESSON: {lesson_data_for_ai['name']}")
+        chat_container = st.container(height=500)
         
-        if active_lesson_node is not None:
-            # 1. THE DATA BINDING (MUST BE FIRST)
-            # This populates the dictionary for both the handshake and standard chat
-            elements = [
-                {'title': e.get('title'), 'text': e.text} 
-                for e in active_lesson_node.find('LessonElements').findall('Element')
-            ]
-            resources = [
-                r.get('file') 
-                for r in active_lesson_node.find('LessonResources').findall('Resource')
-            ]
-
-            # Fixes the Pylance 'undefined' error
-            lesson_data_for_ai = {
-                'name': active_lesson_node.get('name'),
-                'elements_full': elements,
-                'resource_list': resources,
-                'scenario': active_lesson_node.find('ApplicationScenario').text
-            }
-
-            # 2. THE HANDSHAKE (Now has full access to the data)
-            if st.session_state.get("needs_handshake", False):
-                # Pass the defined dictionary here
-                response = get_auditor_response("INITIATE_HANDSHAKE", lesson_data_for_ai)
+        for msg in st.session_state.chat_history:
+            ui_role = "assistant" if msg["role"] == "model" else "user"
+            with chat_container.chat_message(ui_role):
+                content = msg["content"]
                 
-                # Use greedy regex to clean brackets
-                clean_resp = re.sub(r"\[.*?\]", "", response).strip()
+                # A. Detect the Image Tag
+                img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", content)
                 
-                st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
-                st.session_state.needs_handshake = False
-                st.rerun()
+                # B. CLEAN AND RENDER TEXT (Using st.write for Markdown)
+                # This wipes the tag and any stray brackets seen in your images
+                clean_text = re.sub(r"\[\[.*?\]\]", "", content)
+                clean_text = clean_text.replace("]", "").strip()
+                
+                if clean_text:
+                    st.write(clean_text)
 
-            # 3. STANDARD DISPLAY (Proceeds only if handshake is False)
-            st.subheader(f"🎯 LESSON: {active_lesson_node.get('name')}")
-
-            chat_container = st.container(height=500)
-            for msg in st.session_state.chat_history:
-                ui_role = "assistant" if msg["role"] == "model" else "user"
-                with chat_container.chat_message(ui_role):
-                    content = msg["content"]
-                    
-                    # 1. Catch the image filename with a greedy regex
-                    img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", content)
-                    
-                    # 2. AGGRESSIVE CLEANING: This wipes the tag and any stray trailing brackets
-                    # Use st.write (NOT st.code) so Markdown is rendered correctly
-                    clean_text = re.sub(r"\[\[.*?\]\]", "", content)
-                    clean_text = clean_text.replace("]", "").strip()
-                    
-                    if clean_text:
-                        st.write(clean_text)
-
-                    # 3. Render the image if a valid filename exists and is in our manifest
-                    if img_match:
-                        filename = img_match.group(1).strip()
-                        # Look specifically in your assets folder
-                        try:
-                            st.image(f"assets/{filename}", width="stretch")
-                        except:
-                            st.error(f"Asset '{filename}' not found in /assets/")
+                # C. RENDER IMAGE (C2-Style Discrete Block)
+                if img_match:
+                    filename = img_match.group(1).strip()
+                    try:
+                        st.image(f"assets/{filename}", width="stretch")
+                    except:
+                        st.error(f"Media Error: {filename} not found in /assets/")
                     
             if user_input := st.chat_input("Your response ..."):
                 # --- ENHANCED DATA BINDING ---
