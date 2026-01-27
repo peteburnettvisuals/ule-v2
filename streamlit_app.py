@@ -79,7 +79,11 @@ def get_instructor_response(user_input, lesson_cartridge):
     
     # 3. History Sync
     gemini_history = []
-    for msg in st.session_state.chat_history:
+    # Grab only the last 10 messages (5 pairs of back-and-forth)
+    # This keeps TPM low while keeping the immediate context fresh
+    trimmed_history = st.session_state.chat_history[-10:] 
+
+    for msg in trimmed_history:
         role = "model" if msg["role"] == "model" else "user"
         gemini_history.append({"role": role, "parts": [{"text": msg["content"]}]})
 
@@ -90,7 +94,7 @@ def get_instructor_response(user_input, lesson_cartridge):
     else:
         chat = model.start_chat(history=gemini_history)
         # We inject the base_prompt as a 'System Instruction' on every turn to prevent drift
-        context_injection = f"SYSTEM INSTRUCTION: Stick to the Lesson Cartridge and the CDAA method. \nUSER: {user_input}"
+        context_injection = f"SYSTEM INSTRUCTION: Stick to the Lesson Cartridge. \nUSER: {user_input}"
         response = chat.send_message(context_injection)
         
     return response.text
@@ -486,9 +490,10 @@ else:
                 st.session_state.chat_history.append({"role": "model", "content": clean_resp})
                 st.session_state.all_histories[st.session_state.active_lesson] = st.session_state.chat_history
                 
-                with st.status("🔒 Securing Training Data...") as status:
+                with st.status("🔒 Autosaving your progress ...") as status:
                     save_audit_progress()
-                    status.update(label="✅ Progress Secure", state="complete")
+                    time.sleep(2)
+                    status.update(label="✅ AutoSave Complete", state="complete")
                 
                 st.rerun()
 
@@ -496,26 +501,39 @@ else:
             # Fallback UI if the lesson ID is missing or mismatched
             st.warning("Please select a valid lesson from the sidebar to begin.")        
 
-    # --- COLUMN 3: STABILIZED CHECKLIST ---
+    # --- COLUMN 3: STABILIZED CHECKLIST (HUD MODE) ---
     with col3:
+        # 1. Spacer for Vertical Alignment with Col 2 Subheader
+        st.markdown("<div style='margin-top: 3.85rem;'></div>", unsafe_allow_html=True)
         st.subheader("Visual Reference")
         
-        # Check if the Instructor has "passed" an image to the deck
         active_img = st.session_state.get("active_visual")
         
         if active_img:
             try:
-                # We use use_container_width to ensure it fits the 2026 UI spec
                 st.image(f"assets/{active_img}", use_container_width=True)
-                
-                # Optional: Add a caption to help the student focus
+                # Inline styling for the light-grey #cbd5e1 caption
                 st.markdown(f"""
-                    <p style='color: #cbd5e1; font-size: 0.8rem; font-style: italic; margin-top: -10px;'>
-                        Currently viewing: {active_img}
+                    <p style='color: #cbd5e1; font-size: 0.8rem; font-style: italic; margin-top: -5px; opacity: 0.8;'>
+                        Ref: {active_img}
                     </p>
                 """, unsafe_allow_html=True)
             except:
-                st.warning(f"Static Asset Sync: {active_img} not found in /assets/")
+                st.warning(f"Static Asset Sync: {active_img} not found.")
         else:
-            # Initial State: A placeholder or helpful hint
-            st.info("Visual aids will appear here automatically as the Instructor introduces them.")
+            # 2. The 'Ghost Placeholder' instead of st.info
+            # This keeps the UI light and professional
+            st.markdown("""
+                <div style='
+                    border: 1px dashed rgba(255, 255, 255, 0.2); 
+                    border-radius: 10px; 
+                    padding: 40px 20px; 
+                    text-align: center; 
+                    background: rgba(255, 255, 255, 0.03);
+                '>
+                    <p style='color: #cbd5e1; font-size: 0.9rem; opacity: 0.6;'>
+                        🛰️ <b>Awaiting Instructor Guidance</b><br>
+                        Visual aids and diagrams will snap into this deck as they are mentioned in the briefing.
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
