@@ -99,11 +99,12 @@ def get_auditor_response(user_input, lesson_data):
         )
         response = model.generate_content(full_call)
     else:
-        # Resume the existing chat history
+        # Resume existing chat history but anchor it to the syllabus
         chat = model.start_chat(history=gemini_history)
-        # Don't re-send the whole prompt, just the user input. 
-        # The history already contains the context from the handshake.
-        response = chat.send_message(user_input)
+        
+        # We pass the prompt as context alongside the user's input to keep it stateful
+        context_injection = f"SYSTEM INSTRUCTION: Stick to the Syllabus. Deliver one element at a time. \nUSER: {user_input}"
+        response = chat.send_message(context_injection)
         
     return response.text
 
@@ -474,18 +475,20 @@ else:
                 # (Streamlit handles the 'disabled' look, but a toast adds that 'explainer' feel)
 
     # --- COLUMN 2: THE RE-ENGINEERED 2026 RENDERER ---
+    # --- COLUMN 2: THE UNIFIED DATA BRIDGE ---
     with col2:
         active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
         
         if active_lesson_node is not None:
-            # 1. DATA BINDING (MUST BE FIRST)
-            # This resolves the Pylance 'undefined' error for the handshake
+            # SINGLE SOURCE OF TRUTH: Bind all data here once per rerun
             elements = [
                 {'title': e.get('title'), 'text': e.text} 
                 for e in active_lesson_node.find('LessonElements').findall('Element')
             ]
+            
+            # PRO TIP: Map the filename to the description so the AI knows 'why' to use it
             resources = [
-                r.get('file') 
+                f"{r.text}: [[IMAGE:{r.get('file')}]]" 
                 for r in active_lesson_node.find('LessonResources').findall('Resource')
             ]
 
@@ -496,12 +499,10 @@ else:
                 'scenario': active_lesson_node.find('ApplicationScenario').text
             }
 
-            # 2. THE HANDSHAKE
+            # --- A. THE HANDSHAKE (Now perfectly synced) ---
             if st.session_state.get("needs_handshake", False):
                 response = get_auditor_response("INITIATE_HANDSHAKE", lesson_data_for_ai)
-                # Remove internal logic tags like [SCORE: 0]
                 clean_resp = re.sub(r"\[.*?\]", "", response).strip()
-                
                 st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
                 st.session_state.needs_handshake = False
                 st.rerun()
@@ -548,7 +549,7 @@ else:
                     
                     # 2. Map the Lesson Resources (The Image Backpack)
                     resources = [
-                        r.get('file') 
+                        f"{r.text}: [[IMAGE:{r.get('file')}]]" 
                         for r in active_lesson_node.find('LessonResources').findall('Resource')
                     ]
 
