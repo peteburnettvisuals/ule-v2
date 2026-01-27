@@ -6,7 +6,6 @@
     </Config>
     <Module name="M1: Equipment" id="CAT-GEAR">
         <Lesson id="CAT-GEAR-01" name="The Parachute Rig">
-            <Context>This lesson covers the elements of the parachute rig, so you know where everything is.</Context>
             <MaxScore>100</MaxScore>
             <Multiplier>1</Multiplier>
             <LessonElements>
@@ -21,7 +20,6 @@
             <ApplicationScenario>The student is at the dropzone, and they are given a new parachute. What should they check for, and where will they find it?</ApplicationScenario>
         </Lesson>
         <Lesson id="CAT-GEAR-02" name="The Altimeter">
-            <Context>This lesson looks at the altimeter.</Context>
             <Multiplier>1</Multiplier>
             <MaxScore>100</MaxScore>
             <LessonElements>
@@ -39,7 +37,6 @@
     </Module>
     <Module name="M2: Environment" id="CAT-ENV">
         <Lesson id="CAT-ENV-01" name="Danger Conditions">
-            <Context>This lesson highlights weather conditions that might impact or prevent a jump.</Context>
             <MaxScore>100</MaxScore>
             <Multiplier>1</Multiplier>
             <LessonElements>
@@ -55,7 +52,6 @@
             <ApplicationScenario>The student is at the dropzone, on a cloudy and blustery day. What should they check for?</ApplicationScenario>
         </Lesson>
         <Lesson id="CAT-ENV-02" name="Water Landings">
-            <Context>This lesson looks at the dangers of (and correct process for) water landings.</Context>
             <Multiplier>1</Multiplier>
             <MaxScore>100</MaxScore>
             <LessonElements>

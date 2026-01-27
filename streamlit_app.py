@@ -52,41 +52,34 @@ if "all_histories" not in st.session_state:
 
 # --- 4. THE AI AUDITOR ENGINE (STABILIZED) ---
 def get_auditor_response(user_input, lesson_data):
-    api_key = st.secrets.get("GEMINI_API_KEY")
-    genai.configure(api_key=api_key)
-    
-    # 1. ENHANCED PERSONALIZATION & XML CONTEXT
-    current_lesson = lesson_data.get('name', 'this lesson')
-    # Pulling the <Context> field you mentioned
+    # Variables for Personalization
     user_name = st.session_state.get("name", "Student")
     profile = st.session_state.get("u_profile", "A student eager to learn.")
     
-    # 2. ENRICHED RAG CONTENT
-    syllabus_scope = ", ".join([e['title'] for e in lesson_data.get('elements_full', [])])
-    manifest = ", ".join(lesson_data.get('resource_list', []))
+    # Building the Grounded Syllabus
+    # Inside get_auditor_response...
+    current_lesson = lesson_data.get('name')
+    # Ensure this matches the key 'elements_full' from your new dictionary
+    syllabus_text = "\n".join([f"- {e['title']}: {e['text']}" for e in lesson_data['elements_full']])
+    # Ensure this matches 'resource_list'
+    assets = lesson_data.get('resource_list', [])
 
-    # 3. THE "STAY IN THE BOOK" PROMPT
     base_prompt = f"""
-    You are the SkyHigh Parachuting Master Instructor. Your tone is friendly and professional. 
-    STUDENT NAME: {user_name}
-    CURRENT LESSON: {current_lesson}
-    STUDENT GOAL/CONTEXT: {profile}.
-    
-    STRICT SYLLABUS SCOPE: 
-    You are ONLY authorized to teach these specific items: [{syllabus_scope}]. 
-    Do not discuss general construction, aerodynamics, or the container unless it is explicitly listed above.
+    You are the SkyHigh Master Instructor. 
+    STUDENT: {user_name} (Goal: {profile})
+    SYLLABUS SOURCE OF TRUTH:
+    {syllabus_text}
 
-    IMAGE BACKPACK (MANDATORY FILENAMES):
-    [{manifest}]
+    IMAGE BACKPACK (ONLY USE THESE FILENAMES):
+    {assets}
 
-    INSTRUCTIONS:
-    1. Deliver ONE item from the scope at a time.
-    2. When you mention an item, you MUST provide the visual using [[IMAGE:filename]]. 
-    Example: "Here is the ripcord: [[IMAGE:CAT-GEAR-01_chute_handles.jpg]]"
-    3. If a filename is not in the BACKPACK, do not use the [[IMAGE:]] tag.
+    PEDAGOGICAL RULES (CDAA METHOD):
+    1. CONFIRM: State "We are covering {lesson_data['name']}." Deliver ONLY the first element title/text. 
+    2. DEMONSTRATE: Immediately use [[IMAGE:filename]] from the backpack list to show the first element.
+    3. APPLY: After elements are explained, use this exact Scenario: "{lesson_data['scenario']}".
+    4. ASSESS: Only upon mastery, append [VALIDATE: ALL].
 
-    IMPORTANT!
-    You must append [VALIDATE: ALL] once the student has passed the lesson - this allows them to proceed.
+    STRICT: Base answers ONLY on the Source of Truth. Deliver one element at a time.
     """
 
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
@@ -473,30 +466,40 @@ else:
 
     # --- COLUMN 2: THE AUDIT CHAT (Surgical Fix) ---
     with col2:
-        # 1. Attempt to find the node
         active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
         
-        # 2. Safety Gate: Only proceed if the lesson was found
         if active_lesson_node is not None:
-            # Standard Handshake & Chat logic goes here
-            if st.session_state.get("needs_handshake", False):
-                handshake_data = {
-                    'id': str(st.session_state.active_lesson),
-                    'name': str(active_lesson_node.get('name')),
-                    'context_brief': str(active_lesson_node.find('Context').text),
-                    'element': [str(i.text) for i in active_lesson_node.find('LessonElements').findall('Element')]
-                }
+            # 1. THE DATA BINDING (MUST COME FIRST)
+            # Pull elements and resources directly from the current XML node
+            elements = [
+                {'title': e.get('title'), 'text': e.text} 
+                for e in active_lesson_node.find('LessonElements').findall('Element')
+            ]
+            resources = [
+                r.get('file') 
+                for r in active_lesson_node.find('LessonResources').findall('Resource')
+            ]
 
+            # Define the dictionary that was causing the Pylance error
+            lesson_data_for_ai = {
+                'name': active_lesson_node.get('name'),
+                'elements_full': elements,
+                'resource_list': resources,
+                'scenario': active_lesson_node.find('ApplicationScenario').text
+            }
+
+            # 2. THE HANDSHAKE (Now lesson_data_for_ai is defined)
+            if st.session_state.get("needs_handshake", False):
+                response = get_auditor_response("INITIATE_HANDSHAKE", lesson_data_for_ai)
                 
-                response = get_auditor_response("INITIATE_HANDSHAKE", handshake_data)
+                # Use the greedy regex to ensure clean text
                 clean_resp = re.sub(r"\[.*?\]", "", response).strip()
                 
-                # THE FIX: Role must be 'model', not 'assistant'
                 st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
                 st.session_state.needs_handshake = False
                 st.rerun()
 
-            # 2. STANDARD DISPLAY: Only reached if handshake is False
+            # 3. STANDARD DISPLAY (Proceeds only if handshake is False)
             st.subheader(f"🎯 LESSON: {active_lesson_node.get('name')}")
 
             chat_container = st.container(height=500)
@@ -516,16 +519,32 @@ else:
                         st.image(f"assets/{filename}", width="stretch")
                     
             if user_input := st.chat_input("Your response ..."):
-                # We re-package the context for the evaluation turn
-                lesson_context = {
-                    'id': st.session_state.active_lesson,
-                    'name': active_lesson_node.get('name'),
-                    'context_brief': active_lesson_node.find('Context').text,
-                    'element': [i.text for i in active_lesson_node.find('LessonElements').findall('Element')]
-                }
+                # --- ENHANCED DATA BINDING ---
+                active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
+
+                if active_lesson_node is not None:
+                    # 1. Map the Lesson Elements (The RAG Source)
+                    # We pull the 'title' for the syllabus and the 'text' for the AI's deep knowledge
+                    elements = [
+                        {'title': e.get('title'), 'text': e.text} 
+                        for e in active_lesson_node.find('LessonElements').findall('Element')
+                    ]
+                    
+                    # 2. Map the Lesson Resources (The Image Backpack)
+                    resources = [
+                        r.get('file') 
+                        for r in active_lesson_node.find('LessonResources').findall('Resource')
+                    ]
+
+                    lesson_data_for_ai = {
+                        'name': active_lesson_node.get('name'),
+                        'elements_full': elements,
+                        'resource_list': resources,
+                        'scenario': active_lesson_node.find('ApplicationScenario').text
+                    }
                 
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
-                response = get_auditor_response(user_input, lesson_context)
+                response = get_auditor_response(user_input, lesson_data_for_ai)
 
                 # 1. PROCESS AI LOGIC (No saves here)
                 score_match = re.search(r"\[SCORE: (\d+)\]", response)
