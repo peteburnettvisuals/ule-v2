@@ -16,12 +16,12 @@ html {
 
 /* 2. THREE-COLUMN UI: COLUMN 3 PINNING (NEW) */
 /* This ensures the Visual Deck in Column 3 remains fixed while Column 2 scrolls */
+/* Align Column 3 visual deck with the first chat bubble */
 [data-testid="column"]:nth-of-type(3) {
-    position: -webkit-sticky;
     position: sticky;
     top: 2rem;
+    padding-top: 3.8rem !important; /* This offsets the Column 2 Subheader height */
     height: fit-content;
-    z-index: 1;
 }
 
 /* 3. CLEAN LIGHT SIDEBAR */

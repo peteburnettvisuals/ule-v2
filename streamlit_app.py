@@ -508,7 +508,11 @@ else:
                 st.image(f"assets/{active_img}", use_container_width=True)
                 
                 # Optional: Add a caption to help the student focus
-                st.caption(f"Currently viewing: {active_img}")
+                st.markdown(f"""
+                    <p style='color: #cbd5e1; font-size: 0.8rem; font-style: italic; margin-top: -10px;'>
+                        Currently viewing: {active_img}
+                    </p>
+                """, unsafe_allow_html=True)
             except:
                 st.warning(f"Static Asset Sync: {active_img} not found in /assets/")
         else:
