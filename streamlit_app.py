@@ -474,65 +474,65 @@ else:
                 # (Streamlit handles the 'disabled' look, but a toast adds that 'explainer' feel)
 
     # --- COLUMN 2: THE RE-ENGINEERED 2026 RENDERER ---
-with col2:
-    active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
-    
-    if active_lesson_node is not None:
-        # 1. DATA BINDING (MUST BE FIRST)
-        # This resolves the Pylance 'undefined' error for the handshake
-        elements = [
-            {'title': e.get('title'), 'text': e.text} 
-            for e in active_lesson_node.find('LessonElements').findall('Element')
-        ]
-        resources = [
-            r.get('file') 
-            for r in active_lesson_node.find('LessonResources').findall('Resource')
-        ]
-
-        lesson_data_for_ai = {
-            'name': active_lesson_node.get('name'),
-            'elements_full': elements,
-            'resource_list': resources,
-            'scenario': active_lesson_node.find('ApplicationScenario').text
-        }
-
-        # 2. THE HANDSHAKE
-        if st.session_state.get("needs_handshake", False):
-            response = get_auditor_response("INITIATE_HANDSHAKE", lesson_data_for_ai)
-            # Remove internal logic tags like [SCORE: 0]
-            clean_resp = re.sub(r"\[.*?\]", "", response).strip()
-            
-            st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
-            st.session_state.needs_handshake = False
-            st.rerun()
-
-        # 3. CHAT DISPLAY (CLEAN RENDER)
-        st.subheader(f"🎯 LESSON: {lesson_data_for_ai['name']}")
-        chat_container = st.container(height=500)
+    with col2:
+        active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
         
-        for msg in st.session_state.chat_history:
-            ui_role = "assistant" if msg["role"] == "model" else "user"
-            with chat_container.chat_message(ui_role):
-                content = msg["content"]
-                
-                # A. Detect the Image Tag
-                img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", content)
-                
-                # B. CLEAN AND RENDER TEXT (Using st.write for Markdown)
-                # This wipes the tag and any stray brackets seen in your images
-                clean_text = re.sub(r"\[\[.*?\]\]", "", content)
-                clean_text = clean_text.replace("]", "").strip()
-                
-                if clean_text:
-                    st.write(clean_text)
+        if active_lesson_node is not None:
+            # 1. DATA BINDING (MUST BE FIRST)
+            # This resolves the Pylance 'undefined' error for the handshake
+            elements = [
+                {'title': e.get('title'), 'text': e.text} 
+                for e in active_lesson_node.find('LessonElements').findall('Element')
+            ]
+            resources = [
+                r.get('file') 
+                for r in active_lesson_node.find('LessonResources').findall('Resource')
+            ]
 
-                # C. RENDER IMAGE (C2-Style Discrete Block)
-                if img_match:
-                    filename = img_match.group(1).strip()
-                    try:
-                        st.image(f"assets/{filename}", width="stretch")
-                    except:
-                        st.error(f"Media Error: {filename} not found in /assets/")
+            lesson_data_for_ai = {
+                'name': active_lesson_node.get('name'),
+                'elements_full': elements,
+                'resource_list': resources,
+                'scenario': active_lesson_node.find('ApplicationScenario').text
+            }
+
+            # 2. THE HANDSHAKE
+            if st.session_state.get("needs_handshake", False):
+                response = get_auditor_response("INITIATE_HANDSHAKE", lesson_data_for_ai)
+                # Remove internal logic tags like [SCORE: 0]
+                clean_resp = re.sub(r"\[.*?\]", "", response).strip()
+                
+                st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
+                st.session_state.needs_handshake = False
+                st.rerun()
+
+            # 3. CHAT DISPLAY (CLEAN RENDER)
+            st.subheader(f"🎯 LESSON: {lesson_data_for_ai['name']}")
+            chat_container = st.container(height=500)
+            
+            for msg in st.session_state.chat_history:
+                ui_role = "assistant" if msg["role"] == "model" else "user"
+                with chat_container.chat_message(ui_role):
+                    content = msg["content"]
+                    
+                    # A. Detect the Image Tag
+                    img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", content)
+                    
+                    # B. CLEAN AND RENDER TEXT (Using st.write for Markdown)
+                    # This wipes the tag and any stray brackets seen in your images
+                    clean_text = re.sub(r"\[\[.*?\]\]", "", content)
+                    clean_text = clean_text.replace("]", "").strip()
+                    
+                    if clean_text:
+                        st.write(clean_text)
+
+                    # C. RENDER IMAGE (C2-Style Discrete Block)
+                    if img_match:
+                        filename = img_match.group(1).strip()
+                        try:
+                            st.image(f"assets/{filename}", width="stretch")
+                        except:
+                            st.error(f"Media Error: {filename} not found in /assets/")
                     
             if user_input := st.chat_input("Your response ...", key=f"chat_input_{st.session_state.active_lesson}"):
                 # --- ENHANCED DATA BINDING ---
