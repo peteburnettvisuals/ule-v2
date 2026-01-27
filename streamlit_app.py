@@ -62,7 +62,7 @@ def get_auditor_response(user_input, lesson_data):
     # Ensure this matches the key 'elements_full' from your new dictionary
     syllabus_text = "\n".join([f"- {e['title']}: {e['text']}" for e in lesson_data['elements_full']])
     # Ensure this matches 'resource_list'
-    assets = lesson_data.get('resource_list', [])
+    asset_manifest = ", ".join(lesson_data.get('resource_list', []))
 
     base_prompt = f"""
     You are the SkyHigh Master Instructor. 
@@ -70,8 +70,7 @@ def get_auditor_response(user_input, lesson_data):
     SYLLABUS SOURCE OF TRUTH:
     {syllabus_text}
 
-    IMAGE BACKPACK (ONLY USE THESE FILENAMES):
-    {assets}
+    IMAGE BACKPACK (ONLY USE THESE FILENAMES): {asset_manifest}
 
     PEDAGOGICAL RULES (CDAA METHOD):
     1. CONFIRM: State "We are covering {lesson_data['name']}." Deliver ONLY the first element title/text. 
@@ -85,8 +84,12 @@ def get_auditor_response(user_input, lesson_data):
     model = genai.GenerativeModel(model_name='gemini-2.0-flash')
     
     if user_input == "INITIATE_HANDSHAKE":
-        # Grounding the handshake in the actual Lesson Name
-        full_call = f"{base_prompt}\n\nUSER: Please introduce the lesson '{current_lesson}' and start with the first element."
+        # Grounding the handshake in the actual Lesson Name and Persona
+        full_call = (
+            f"{base_prompt}\n\n"
+            f"USER: {user_name} is ready. Please greet them warmly by name, "
+            f"introduce the lesson '{current_lesson}', and explain the first element."
+        )
         response = model.generate_content(full_call)
     else:
         gemini_history = []
@@ -469,8 +472,8 @@ else:
         active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
         
         if active_lesson_node is not None:
-            # 1. THE DATA BINDING (MUST COME FIRST)
-            # Pull elements and resources directly from the current XML node
+            # 1. THE DATA BINDING (MUST BE FIRST)
+            # This populates the dictionary for both the handshake and standard chat
             elements = [
                 {'title': e.get('title'), 'text': e.text} 
                 for e in active_lesson_node.find('LessonElements').findall('Element')
@@ -480,7 +483,7 @@ else:
                 for r in active_lesson_node.find('LessonResources').findall('Resource')
             ]
 
-            # Define the dictionary that was causing the Pylance error
+            # Fixes the Pylance 'undefined' error
             lesson_data_for_ai = {
                 'name': active_lesson_node.get('name'),
                 'elements_full': elements,
@@ -488,11 +491,12 @@ else:
                 'scenario': active_lesson_node.find('ApplicationScenario').text
             }
 
-            # 2. THE HANDSHAKE (Now lesson_data_for_ai is defined)
+            # 2. THE HANDSHAKE (Now has full access to the data)
             if st.session_state.get("needs_handshake", False):
+                # Pass the defined dictionary here
                 response = get_auditor_response("INITIATE_HANDSHAKE", lesson_data_for_ai)
                 
-                # Use the greedy regex to ensure clean text
+                # Use greedy regex to clean brackets
                 clean_resp = re.sub(r"\[.*?\]", "", response).strip()
                 
                 st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
@@ -506,17 +510,27 @@ else:
             for msg in st.session_state.chat_history:
                 ui_role = "assistant" if msg["role"] == "model" else "user"
                 with chat_container.chat_message(ui_role):
-                    # 1. SHOW THE RAW CONTENT (See what the AI is actually saying)
-                    st.code(msg["content"], language="text") 
+                    content = msg["content"]
                     
-                    # 2. PROPOSED HARDENED REGEX
-                    # This version ignores bolding and extra spaces around the tag
-                    img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", msg["content"])
+                    # 1. Catch the image filename with a greedy regex
+                    img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", content)
                     
+                    # 2. AGGRESSIVE CLEANING: This wipes the tag and any stray trailing brackets
+                    # Use st.write (NOT st.code) so Markdown is rendered correctly
+                    clean_text = re.sub(r"\[\[.*?\]\]", "", content)
+                    clean_text = clean_text.replace("]", "").strip()
+                    
+                    if clean_text:
+                        st.write(clean_text)
+
+                    # 3. Render the image if a valid filename exists and is in our manifest
                     if img_match:
                         filename = img_match.group(1).strip()
-                        st.success(f"DEBUG: Found valid filename -> {filename}")
-                        st.image(f"assets/{filename}", width="stretch")
+                        # Look specifically in your assets folder
+                        try:
+                            st.image(f"assets/{filename}", width="stretch")
+                        except:
+                            st.error(f"Asset '{filename}' not found in /assets/")
                     
             if user_input := st.chat_input("Your response ..."):
                 # --- ENHANCED DATA BINDING ---
