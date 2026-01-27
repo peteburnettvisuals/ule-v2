@@ -505,33 +505,19 @@ else:
 
             chat_container = st.container(height=500)
             for msg in st.session_state.chat_history:
-                # Gemini 'model' maps to Streamlit 'assistant'
                 ui_role = "assistant" if msg["role"] == "model" else "user"
-                
                 with chat_container.chat_message(ui_role):
-                    content = msg["content"]
+                    # 1. SHOW THE RAW CONTENT (See what the AI is actually saying)
+                    st.code(msg["content"], language="text") 
                     
-                    # Use regex to find the filename inside the tag
-                    img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", content)
+                    # 2. PROPOSED HARDENED REGEX
+                    # This version ignores bolding and extra spaces around the tag
+                    img_match = re.search(r"\[\[\s*IMAGE:\s*(.*?)\s*\]\]", msg["content"])
                     
                     if img_match:
                         filename = img_match.group(1).strip()
-                        # Clean the text by removing the tag entirely
-                        clean_text = re.sub(r"\[\[.*?\]\]", "", content).strip()
-                        
-                        # A. Render the Instructor's explanation
-                        if clean_text:
-                            st.write(clean_text)
-                        
-                        # B. Render the Image as a discrete block (C2 Style)
-                        # Using the 2026 'stretch' syntax to clear your logs
-                        try:
-                            st.image(f"assets/{filename}", width="stretch", caption=f"Reference: {filename}")
-                        except Exception:
-                            st.error(f"Media Sync Error: {filename} not found.")
-                    else:
-                        # Normal text message
-                        st.write(content)
+                        st.success(f"DEBUG: Found valid filename -> {filename}")
+                        st.image(f"assets/{filename}", width="stretch")
                     
             if user_input := st.chat_input("Your response ..."):
                 # We re-package the context for the evaluation turn
