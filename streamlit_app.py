@@ -46,12 +46,14 @@ vertexai.init(
 
 #### Connection test
 
+# Logic for your ULE SaaS roadmap
 try:
-    test_model = GenerativeModel("gemini-2.0-flash")
+    # Points to the latest stable 2.5 Lite engine
+    test_model = GenerativeModel("gemini-2.5-flash-lite") 
     test_resp = test_model.generate_content("Ping")
-    st.success(f"Vertex AI Connected: {test_resp.text}")
+    st.success(f"Vertex AI (2.5 Lite) Connected: {test_resp.text}")
 except Exception as e:
-    st.error(f"Vertex AI Handshake Failed: {e}")
+    st.error(f"Handshake Failed. Error: {e}")
 
 # --- 2. ENGINE UTILITIES ---
 def load_universal_schema(file_path):
