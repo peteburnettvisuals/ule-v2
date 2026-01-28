@@ -47,7 +47,7 @@ vertexai.init(
 #### Connection test
 
 try:
-    test_model = GenerativeModel("gemini-2.0-flash-001")
+    test_model = GenerativeModel("gemini-2.0-flash")
     test_resp = test_model.generate_content("Ping")
     st.success(f"Vertex AI Connected: {test_resp.text}")
 except Exception as e:
