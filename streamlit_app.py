@@ -39,7 +39,7 @@ vertex_credentials = service_account.Credentials.from_service_account_info(verte
 
 vertexai.init(
     project=vertex_creds_info["project_id"],
-    location="europe-west2", # Verify your region
+    location="europe-west3", # Verify your region
     credentials=vertex_credentials
 )
 
