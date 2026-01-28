@@ -13,7 +13,7 @@ from streamlit_echarts import st_echarts
 import vertexai
 from vertexai.generative_models import GenerativeModel, ChatSession
 from vertexai.preview import caching
-from streamlit_authenticator.utilities import Hasher
+
 
 # ----- CSS Loader -------------
 
@@ -291,7 +291,7 @@ if not st.session_state.get("authentication_status"):
                     if new_email and new_password and new_company:
                         try:
                             # 1. HASH & COMMIT: Use the Hasher to secure the password
-                            hashed_password = Hasher([new_password]).generate()[0]
+                            hashed_password = stauth.Hasher([new_password]).generate()[0]
                             
                             # 2. FIRESTORE SYNC: Save the structural profile
                             db.collection("users").document(new_email).set({
