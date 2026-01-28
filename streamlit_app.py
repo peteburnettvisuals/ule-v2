@@ -8,15 +8,25 @@ from google.cloud import firestore
 from google.oauth2 import service_account
 import streamlit_authenticator as stauth
 import time
+import datetime
 from streamlit_echarts import st_echarts
 import vertexai
-from vertexai.generative_models import GenerativeModel, ChatSession
+from vertexai.generative_models import GenerativeModel, ChatSession, caching
+
+# ----- CSS Loader -------------
 
 def local_css(file_name):
     with open(file_name) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 local_css("style.css")
+
+# ----- Vertex Caching -----------
+
+PROJECT_ID = "ulev2-485705"  # Replace with your actual ID
+LOCATION = "europe-west3"       # Frankfurt
+CACHE_NAME = "skyhigh-syllabus-cache"
+
 
 # --- DB LOADER (MAINTAINED) ---
 try:
@@ -43,27 +53,66 @@ vertexai.init(
     credentials=vertex_credentials
 )
 
-
-#### Connection test
-
-# Logic for your ULE SaaS roadmap
-try:
-    # Points to the latest stable 2.5 Lite engine
-    test_model = GenerativeModel("gemini-2.5-flash") 
-    test_resp = test_model.generate_content("Ping")
-    st.success(f"Vertex AI (2.5 Lite) Connected: {test_resp.text}")
-except Exception as e:
-    st.error(f"Handshake Failed. Error: {e}")
-
 # --- 2. ENGINE UTILITIES ---
-def load_universal_schema(file_path):
-    tree = ET.parse(file_path)
-    return tree.getroot()
+
+def initialize_engine():
+    """Initializes Vertex AI and manages the Frankfurt Context Cache."""
+    vertexai.init(project=PROJECT_ID, location=LOCATION)
+    
+    # 1. Try to find an existing active cache
+    try:
+        # List all caches in your Frankfurt project
+        all_caches = caching.CachedContent.list()
+        
+        # Look for the most recent cache created for the 2.5 Flash model
+        # Note: In production, we'd filter by a specific metadata tag or name
+        target_cache = next(c for c in all_caches if "gemini-2.5-flash" in c.model_name)
+        
+        st.sidebar.success(f"✅ Using Active Cache: {target_cache.name[-4:]}")
+        return GenerativeModel.from_cached_content(cached_content=target_cache)
+
+    except (StopIteration, Exception):
+        # 2. If no cache exists, create one from the XML
+        st.sidebar.info("⏳ Initialising SkyHigh LMS ...")
+        
+        with open("skyhigh_textbook.xml", "r", encoding="utf-8") as f:
+            xml_content = f.read()
+
+        # The 'Handshake' System Instruction
+        system_instruction = (
+            "You are the SkyHigh AI Instructor. Use the provided XML as your Primary Authority. "
+            "Prioritize <Module> content over the <ReferenceLibrary>. Use [AssetID] format for images."
+        )
+
+        # Create the cache with a 1-hour TTL (Time To Live)
+        # Your SIM padding ensures we cross the 32,768 token floor!
+        new_cache = caching.CachedContent.create(
+            model_name="gemini-2.5-flash",
+            system_instruction=system_instruction,
+            contents=[xml_content],
+            ttl=datetime.timedelta(hours=1),
+        )
+        
+        st.sidebar.success("🚀 LMS Warmed Up & Cached!")
+        return GenerativeModel.from_cached_content(cached_content=new_cache)
+
+# ------- JSON Manifest Loader -----------------
+
+def load_manifest():
+    with open("manifest.json", "r") as f:
+        return json.load(f)
+
+manifest = load_manifest()
+
 
 # --- 3. SESSION STATE INITIALIZATION ---
+if "model" not in st.session_state:
+    st.session_state.model = initialize_engine()
 if "active_lesson" not in st.session_state:
-    st.session_state.active_lesson = "CAT-GEAR-01"
+    st.session_state.active_lesson = "GEAR-01"
     st.session_state.needs_handshake = True  # NEW: Trigger first handshake on load
+if "active_mod" not in st.session_state:
+    st.session_state.active_mod = manifest['modules'][0]['id']
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "archived_status" not in st.session_state:
@@ -73,56 +122,21 @@ if "all_histories" not in st.session_state:
     # Structure: { "Lesson-ID": [ {role, content}, ... ] }
     st.session_state.all_histories = {}
 
-# --- 4. THE AI INSTRUCTOR ENGINE (CARTRIDGE OPTIMIZED) ---
-def get_instructor_response(user_input, lesson_cartridge):
-    # 1. Personalization Hydration
-    user_name = st.session_state.get("name", "Student")
-    profile = st.session_state.get("u_profile", "A student eager to learn.")
+# --- 4. THE AI INSTRUCTOR ENGINE (VERTEX CACHE VERSION) ---
+
+def get_instructor_response(user_input):
+    # Retrieve the model from session state (which is already linked to the Frankfurt Cache)
+    model = st.session_state.model 
     
-    # 2. The Semantic Prompt
-    # We pass the raw XML text block directly as the 'Cartridge'
-    base_prompt = f"""
-    You are the SkyHigh Master Instructor, an expert skydiving coach. 
-    STUDENT: {user_name} (Goal: {profile})
+    # Check if a chat session already exists for this lesson
+    if "chat_session" not in st.session_state:
+        st.session_state.chat_session = model.start_chat()
 
-    LESSON CARTRIDGE (Your Source of Truth):
-    {lesson_cartridge}
-
-    PEDAGOGICAL RULES:
-    1. Greet the student using first name, and introduce the overall lesson topic found within the cartridge.
-    2. Explain the 'Teaching Content' points conversationally, one at a time. Check the student's understanding on each point before moving on, by getting them to recap the information back to you or asking questions. Close with a question rather than using instructions like "(Waiting for student response)".
-    3. You have visual assets listed which will enrich the students understanding. You MUST use the exact [[filename.jpg]] tags found in the 'Visual Resources' section to illustrate your points. Show the first relevant asset right away.
-    4. Refer to any images triggered for display at a general level. Don't ask the user to point out sections or elements.
-    4. Once the content is explained, transition to the 'Test Scenario' provided in the cartridge.
-    5. If the student successfully navigates the scenario, append [VALIDATE: ALL].
-
-    IMPORTANT! Use ONLY the information in the cartridge. 
-    IMPORTANT! Do not hallucinate external skydiving facts or diver deeper than the material supplied. 
-    If you want the UI to show an image, you MUST output the [[filename.jpg]] tag.
-    """
-
-    model = genai.GenerativeModel(model_name='gemini-2.0-flash')
+    # We simply tell the AI which lesson we are on. 
+    # Because it's grounded in the XML, it knows exactly what 'GEAR-01' means.
+    context_prefix = f"[CURRENT LESSON: {st.session_state.active_lesson}] "
     
-    # 3. History Sync
-    gemini_history = []
-    # Grab only the last 10 messages (5 pairs of back-and-forth)
-    # This keeps TPM low while keeping the immediate context fresh
-    trimmed_history = st.session_state.chat_history[-10:] 
-
-    for msg in trimmed_history:
-        role = "model" if msg["role"] == "model" else "user"
-        gemini_history.append({"role": role, "parts": [{"text": msg["content"]}]})
-
-    # 4. Execution Logic
-    if user_input == "INITIATE_HANDSHAKE":
-        full_call = f"{base_prompt}\n\nUSER: {user_name} is ready for training. Begin the lesson."
-        response = model.generate_content(full_call)
-    else:
-        chat = model.start_chat(history=gemini_history)
-        # We inject the base_prompt as a 'System Instruction' on every turn to prevent drift
-        context_injection = f"SYSTEM INSTRUCTION: Stick to the Lesson Cartridge. \nUSER: {user_input}"
-        response = chat.send_message(context_injection)
-        
+    response = st.session_state.chat_session.send_message(context_prefix + user_input)
     return response.text
 
 def get_user_credentials():
@@ -203,12 +217,16 @@ def load_audit_progress():
             return True
     return False
 
+# New Asset Resolver helper
+def resolve_asset_path(asset_id):
+    asset_info = manifest['resource_library'].get(asset_id)
+    if asset_info:
+        return asset_info['path']
+    return None
+
 
 # --- 5. UI LAYOUT (3-COLUMN SKETCH) ---
 st.set_page_config(layout="wide", page_title="ULE2 Demo System")
-
-# Load XML data
-root = load_universal_schema('ule2-demo.xml')
 
 # --- THE MAIN UI WRAPPER ---
 if not st.session_state.get("authentication_status"):
@@ -305,21 +323,21 @@ else:
 
     # Render the Assess UI    
 
-    # --- SIDEBAR: PROGRESS & TELEMETRY ---
+    # --- SIDEBAR: PROGRESS & TELEMETRY (JSON VERSION) ---
     with st.sidebar:
         st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline4.png", use_container_width=True)
         
-        # 1. Calculation: Percentage of Cartridges Completed
-        total_lessons = root.findall('.//Lesson')
-        total_count = len(total_lessons)
+        # 1. Calculation: Extract all lesson IDs from the JSON manifest
+        all_lessons = [lesson for mod in manifest['modules'] for lesson in mod['lessons']]
+        total_count = len(all_lessons)
         
-        # Count how many lesson IDs are marked True in archived_status
-        completed_count = sum(1 for l in total_lessons if st.session_state.archived_status.get(l.get('id')) == True)
+        # Count how many of these IDs are marked True in archived_status
+        completed_count = sum(1 for l in all_lessons if st.session_state.archived_status.get(l['id']) == True)
         
-        # Simple Progress Percentage
+        # Calculate Percentage
         readiness_pct = round((completed_count / total_count) * 100, 1) if total_count > 0 else 0.0
 
-        # 2. Hardened HUD Config (ECharts Gauge)
+        # 2. ECharts Gauge (Stays the same, just consumes the new readiness_pct)
         gauge_option = {
             "series": [{
                 "type": "gauge",
@@ -341,7 +359,7 @@ else:
                 "detail": {
                     "offsetCenter": [0, "-15%"], 
                     "formatter": "{value}%",
-                    "color": "#1e293b",
+                    "color": "#1e293b", # Adjust based on your style.css
                     "fontSize": "1.5rem",
                     "fontWeight": "bold"
                 },
@@ -356,30 +374,14 @@ else:
         
         # 3. Module Selection
         st.subheader("Training Modules")
-        modules = root.findall('Module')
-        for idx, mod_node in enumerate(modules):
-            mod_id = mod_node.get('id')
-            mod_name = mod_node.get('name')
-            
-            # Check if this module is unlocked
-            if idx == 0:
-                mod_unlocked = True
-            else:
-                # Check if ALL lessons in the PREVIOUS module are complete
-                prev_mod_lessons = modules[idx-1].findall('Lesson')
-                mod_unlocked = all(st.session_state.archived_status.get(l.get('id')) == True for l in prev_mod_lessons)
-            
-            # Check if the WHOLE current module is complete
-            current_mod_lessons = mod_node.findall('Lesson')
-            mod_complete = all(st.session_state.archived_status.get(l.get('id')) == True for l in current_mod_lessons)
-            
-            # Icon Logic
-            m_icon = "✅" if mod_complete else ("🔒" if not mod_unlocked else "📂")
-            
-            if st.button(f"{m_icon} {mod_name}", key=f"side_{mod_id}", disabled=not mod_unlocked, width="stretch"):
-                st.session_state.active_mod = mod_id
-                # Set first lesson of module as active
-                st.session_state.active_lesson = current_mod_lessons[0].get('id')
+        for mod in manifest['modules']:
+            # Use the icon and title from the JSON
+            if st.button(f"{mod['icon']} {mod['title']}", key=f"side_{mod['id']}", width="stretch"):
+                st.session_state.active_mod = mod['id']
+                st.session_state.active_lesson = mod['lessons'][0]['id'] # Default to first lesson
+                # Reset chat for the new lesson
+                if "chat_session" in st.session_state:
+                    del st.session_state.chat_session 
                 st.rerun()
 
     # MAIN INTERFACE: 3 Columns
@@ -387,185 +389,139 @@ else:
 
     # --- COLUMN 1: THE SEQUENTIAL LESSON ROADMAP ---
     with col1:
-        active_mod_id = st.session_state.get("active_mod", "CAT-GEAR")
-        module_node = root.find(f".//Module[@id='{active_mod_id}']")
-        mod_display_name = module_node.get('name') if module_node is not None else "Selection"
-
-        st.subheader(f"Lessons for {mod_display_name}")
+        # 1. Resolve the Active Module from the JSON manifest
+        active_mod_id = st.session_state.get("active_mod", "MOD-01")  # Updated to new ID format
+        module_data = next((m for m in manifest['modules'] if m['id'] == active_mod_id), manifest['modules'][0])
         
-        if module_node is not None:
-            # Capture all lessons in a list to allow index-based 'previous lesson' checks
-            lessons = module_node.findall('Lesson')
-            rendered_ids = set()
+        mod_display_name = module_data['title']
+        st.subheader(f"Lessons for {mod_display_name}")
+
+        # 2. Iterate through lessons in the current module
+        lessons = module_data.get('lessons', [])
+        
+        for idx, lesson in enumerate(lessons):
+            lesson_id = lesson['id']
+            lesson_name = lesson['title']
+            # We can pull estimated time or type from JSON for a richer label
+            est_time = lesson.get('estimated_time', '5m')
+
+            # --- 1. MASTERY & ACTIVE STATUS ---
+            is_complete = st.session_state.archived_status.get(lesson_id) == True
+            is_active = st.session_state.active_lesson == lesson_id
+
+            # --- 2. SEQUENTIAL UNLOCK LOGIC ---
+            # Rule: First lesson of the first module is always unlocked. 
+            # Others require the previous lesson in the list to be complete.
+            if idx == 0:
+                is_unlocked = True
+            else:
+                prev_lesson_id = lessons[idx-1]['id']
+                is_unlocked = st.session_state.archived_status.get(prev_lesson_id) == True
+
+            # --- 3. ICON LOGIC ---
+            if is_complete:
+                icon = "✅"
+            elif not is_unlocked:
+                icon = "🔒"
+            elif is_active:
+                icon = "🎯"
+            else:
+                icon = "📖"
+
+            # --- 4. RENDER BUTTON ---
+            display_label = f"{icon} {lesson_name} ({est_time})"
             
-            for idx, lesson in enumerate(lessons):
-                lesson_id = lesson.get('id')
+            if st.button(
+                display_label, 
+                key=f"btn_roadmap_{lesson_id}", 
+                type="primary" if is_active else "secondary", 
+                use_container_width=True, # Streamlit's new way to do stretch
+                disabled=not is_unlocked
+            ):
+                st.session_state.active_lesson = lesson_id
+                # Cleanly swap chat history
+                st.session_state.chat_history = st.session_state.all_histories.get(lesson_id, [])
                 
-                if lesson_id in rendered_ids:
-                    continue
-                rendered_ids.add(lesson_id)
+                # Reset Chat Session for Vertex AI to prevent context bleed
+                if "chat_session" in st.session_state:
+                    del st.session_state.chat_session
                 
-                lesson_name = lesson.get('name')
-                lesson_desc = lesson.get('desc', "No description available.")
-
-                # 1. MASTERY & ACTIVE STATUS
-                is_complete = st.session_state.archived_status.get(lesson_id) == True
-                is_active = st.session_state.active_lesson == lesson_id
-                
-                # 2. SEQUENTIAL UNLOCK LOGIC
-                # Rule: Lesson 0 is always unlocked. Others require the previous lesson to be complete.
-                if idx == 0:
-                    is_unlocked = True
-                else:
-                    prev_lesson_id = lessons[idx-1].get('id')
-                    is_unlocked = st.session_state.archived_status.get(prev_lesson_id) == True
-
-                # 3. ICON LOGIC
-                if is_complete:
-                    icon = "✅"
-                elif not is_unlocked:
-                    icon = "🔒"
-                elif is_active:
-                    icon = "🎯"
-                else:
-                    icon = "📖"
-
-                display_label = f"{icon} {lesson_name} : {lesson_desc}"
-                button_key = f"btn_{active_mod_id}_{lesson_id}"
-                
-                # 4. RENDER BUTTON
-                if st.button(
-                    display_label, 
-                    key=button_key, 
-                    type="primary" if is_active else "secondary", 
-                    width="stretch",
-                    disabled=not is_unlocked  # This is the 'Mastery Gate'
-                ):
-                    st.session_state.active_lesson = lesson_id
-                    st.session_state.chat_history = st.session_state.all_histories.get(lesson_id, [])
-                    
-                    if not st.session_state.chat_history:
-                        st.session_state.needs_handshake = True 
-                    else:
-                        st.session_state.needs_handshake = False
-                    st.rerun()
+                # Determine if we need to start fresh or resume
+                st.session_state.needs_handshake = not bool(st.session_state.chat_history)
+                st.rerun()
 
                 
 
     
-    # --- COLUMN 2: THE SEMANTIC MENTOR (REFACTORED) ---
+    # --- COLUMN 2: THE SEMANTIC MENTOR (REFACTORED FOR CACHE) ---
     with col2:
-        active_lesson_node = root.find(f".//Lesson[@id='{st.session_state.active_lesson}']")
+        # We now find lesson metadata from the JSON Manifest instead of raw XML parsing
+        current_module = next((m for m in manifest['modules'] if m['id'] == st.session_state.get("active_mod")), manifest['modules'][0])
+        current_lesson = next((l for l in current_module['lessons'] if l['id'] == st.session_state.active_lesson), current_module['lessons'][0])
         
-        if active_lesson_node is not None:
-            # 1. THE CARTRIDGE EXTRACTION
-            # We pull the raw text (Teaching, Visuals, Scenario) in one go
-            lesson_cartridge = active_lesson_node.text.strip()
-            lesson_name = active_lesson_node.get('name')
+        lesson_name = current_lesson['title']
 
-            # 2. THE HANDSHAKE (Cartridge-Based)
-            if st.session_state.get("needs_handshake", False):
-                # Pass the raw text lump directly to the smart engine
-                response = get_instructor_response("INITIATE_HANDSHAKE", lesson_cartridge)
-                
-                # Catch any initial visual tag
-                img_match = re.search(r"\[\[(.*?\.jpg|.*?\.png)\]\]", response)
-                if img_match:
-                    st.session_state.active_visual = img_match.group(1)
-                
-                # Clean and initialize history
-                clean_resp = re.sub(r"\[.*?\]", "", response).replace("]", "").strip()
-                st.session_state.chat_history = [{"role": "model", "content": clean_resp}]
-                st.session_state.needs_handshake = False
-                st.rerun()
-
-            # 3. CHAT DISPLAY (Persistent & Clean)
-            st.subheader(f"🎯 LESSON: {lesson_name}")
-            chat_container = st.container(height=500)
+        # 1. THE HANDSHAKE (Now using the Cache)
+        if st.session_state.get("needs_handshake", False):
+            # We don't send the XML text anymore; we just set the context ID
+            handshake_prompt = f"INITIATE_LESSON: {st.session_state.active_lesson}. Greet the student and begin."
+            response_text = get_instructor_response(handshake_prompt)
             
-            for msg in st.session_state.chat_history:
-                ui_role = "assistant" if msg["role"] == "model" else "user"
-                with chat_container.chat_message(ui_role):
-                    # UI is kept clean; tags are stripped because they render in Col 3
-                    st.write(msg["content"])
+            # Resolve initial visuals from the [AssetID] tags
+            asset_match = re.search(r"\[(IMG-.*?)\]", response_text)
+            if asset_match:
+                st.session_state.active_visual = asset_match.group(1)
+            
+            # Clean response for UI (removes brackets)
+            ui_text = re.sub(r"\[.*?\]", "", response_text).strip()
+            st.session_state.chat_history = [{"role": "model", "content": ui_text}]
+            st.session_state.needs_handshake = False
+            st.rerun()
 
-            # 4. USER INPUT & RESPONSE PROCESSING
-            if user_input := st.chat_input("Your response ...", key=f"chat_input_{st.session_state.active_lesson}"):
-                st.session_state.chat_history.append({"role": "user", "content": user_input})
-                
-                # Get response using the single cartridge source
-                response = get_instructor_response(user_input, lesson_cartridge)
+        # 2. CHAT DISPLAY
+        st.subheader(f"🎯 LESSON: {lesson_name}")
+        chat_container = st.container(height=500)
+        for msg in st.session_state.chat_history:
+            with chat_container.chat_message("assistant" if msg["role"] == "model" else "user"):
+                st.write(msg["content"])
 
-                # --- THE VISUAL BRIDGE ---
-                # Catch visual tags to update Column 3
-                img_match = re.search(r"\[\[(.*?\.jpg|.*?\.png)\]\]", response)
-                if img_match:
-                    st.session_state.active_visual = img_match.group(1)
+        # 3. USER INPUT PROCESSING
+        if user_input := st.chat_input("Ask a question...", key=f"chat_{st.session_state.active_lesson}"):
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            
+            # Call the engine (which uses the Frankfurt Cache)
+            raw_response = get_instructor_response(user_input)
 
-                # --- THE LOGIC GATE ---
-                # Handle mastery validation and scoring
-                if "[VALIDATE: ALL]" in response:
-                    st.session_state.archived_status[st.session_state.active_lesson] = True
-                
-                score_match = re.search(r"\[SCORE: (\d+)\]", response)
-                if score_match:
-                    st.session_state.lesson_scores[st.session_state.active_lesson] = int(score_match.group(1))
+            # Update Visuals: Look for [IMG-XXXX] in the AI's reply
+            asset_match = re.search(r"\[(IMG-.*?)\]", raw_response)
+            if asset_match:
+                st.session_state.active_visual = asset_match.group(1)
 
-                # --- UI CLEANUP & SAVE ---
-                clean_resp = re.sub(r"\[.*?\]", "", response).replace("]", "").strip()
-                st.session_state.chat_history.append({"role": "model", "content": clean_resp})
-                st.session_state.all_histories[st.session_state.active_lesson] = st.session_state.chat_history
-                
-                with st.status("🔒 Autosaving your progress ...") as status:
-                    save_audit_progress()
-                    time.sleep(2)
-                    status.update(label="✅ AutoSave Complete", state="complete")
-                
-                st.rerun()
+            # Logic Gates: Check for completion or scoring tags
+            if "[VALIDATE: ALL]" in raw_response:
+                st.session_state.archived_status[st.session_state.active_lesson] = True
+                st.balloons()
+            
+            # Clean and Save
+            ui_response = re.sub(r"\[.*?\]", "", raw_response).strip()
+            st.session_state.chat_history.append({"role": "model", "content": ui_response})
+            st.session_state.all_histories[st.session_state.active_lesson] = st.session_state.chat_history
+            
+            save_audit_progress()
+            st.rerun()
 
-        else:
-            # Fallback UI if the lesson ID is missing or mismatched
-            st.warning("Please select a valid lesson from the sidebar to begin.")        
-
-    # --- COLUMN 3: STABILIZED CHECKLIST (HUD MODE) ---
+    # --- COLUMN 3: HUD (ASSET RESOLVER) ---
     with col3:
-        # 1. Spacer for Vertical Alignment with Col 2 Subheader
         st.markdown("<div style='margin-top: 3.85rem;'></div>", unsafe_allow_html=True)
-        st.subheader("Visual References for this Lesson")
+        st.subheader("Reference Deck")
         
-        active_img = st.session_state.get("active_visual")
-        
-        if active_img:
-            # 1. Start the 'try' block to catch missing file errors
-            try:
-                st.image(f"assets/{active_img}", use_container_width=True)
-                
-                # 2. Apply the Inline Style Caption (The Sledgehammer)
-                st.markdown(f"""
-                    <div style='margin-top: -10px;'>
-                        <span style='color: #cbd5e1 !important; font-size: 0.8rem; font-style: italic; opacity: 0.7;'>
-                            🛰️ Currently viewing: {active_img}
-                        </span>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-            # 3. Handle the error if the file doesn't exist
-            except Exception as e:
-                st.warning(f"Static Asset Sync: {active_img} not found in /assets/")
+        asset_id = st.session_state.get("active_visual")
+        if asset_id:
+            path = resolve_asset_path(asset_id)
+            if path:
+                # If path starts with gs://, you'd use a GCS signed URL helper here.
+                # For the demo, we assume local assets/ folder mapping
+                local_file = path.split("/")[-1] 
+                st.image(f"assets/{local_file}", caption=f"Resource: {asset_id}")
         else:
-            # 2. The 'Ghost Placeholder' instead of st.info
-            # This keeps the UI light and professional
-            st.markdown("""
-                <div style='
-                    border: 1px dashed rgba(255, 255, 255, 0.2); 
-                    border-radius: 10px; 
-                    padding: 40px 20px; 
-                    text-align: center; 
-                    background: rgba(255, 255, 255, 0.03);
-                '>
-                    <p style='color: #cbd5e1; font-size: 0.9rem; opacity: 0.6;'>
-                        🛰️ <b>Awaiting Instructor Guidance</b><br>
-                        Visual aids and diagrams will snap into this deck as they are mentioned in the briefing.
-                    </p>
-                </div>
-            """, unsafe_allow_html=True)
+            st.info("Awaiting visual guidance from the instructor...")

@@ -1,0 +1,123 @@
+{
+  "course_metadata": {
+    "title": "SkyHigh Skydiving Syllabus",
+    "version": "3.1",
+    "total_modules": 3,
+    "total_lessons": 9
+  },
+  "modules": [
+    {
+      "id": "MOD-01",
+      "title": "Equipment",
+      "icon": "🪂",
+      "order": 1,
+      "lessons": [
+        {
+          "id": "GEAR-01",
+          "title": "Dual Canopy System",
+          "order": 1,
+          "estimated_time": "5m",
+          "requires_grounding": true,
+          "tags": ["chute", "gear"],
+          "primary_assets": ["IMG-CHUTE1", "IMG-CHUTE-HANDLES1"]
+        },
+        {
+          "id": "GEAR-02",
+          "title": "Altimeter",
+          "order": 2,
+          "estimated_time": "5m",
+          "requires_grounding": true,
+          "tags": ["instrument", "altitude"],
+          "primary_assets": ["IMG-ALTIMETER1"]
+        }
+      ]
+    },
+    {
+      "id": "MOD-02",
+      "title": "Standard Procedures",
+      "icon": "📋",
+      "order": 2,
+      "lessons": [
+        {
+          "id": "SOP-01",
+          "title": "Environmental Checks",
+          "order": 1,
+          "estimated_time": "5m",
+          "requires_grounding": true,
+          "tags": ["weather", "clouds"],
+          "primary_assets": ["IMG-CUNIM1", "IMG-CLOUD1"]
+        },
+        {
+          "id": "SOP-02",
+          "title": "Aircraft Exit Procedure",
+          "order": 2,
+          "estimated_time": "5m",
+          "requires_grounding": true,
+          "tags": ["stable arch", "banana"],
+          "primary_assets": []
+        },
+        {
+          "id": "SOP-03",
+          "title": "Decision Window & Deployment",
+          "order": 3,
+          "estimated_time": "5m",
+          "requires_grounding": true,
+          "tags": ["altitude", "safety"],
+          "primary_assets": ["IMG-DECWINDOW1"]
+        },
+        {
+          "id": "SOP-04",
+          "title": "Steering & Landing",
+          "order": 4,
+          "estimated_time": "5m",
+          "requires_grounding": true,
+          "tags": ["toggles", "flaring"],
+          "primary_assets": []
+        }
+      ]
+    },
+    {
+      "id": "MOD-03",
+      "title": "Emergency Procedures",
+      "icon": "⚠️",
+      "order": 3,
+      "lessons": [
+        {
+          "id": "EOP-01",
+          "title": "Line Twists",
+          "order": 1,
+          "estimated_time": "5m",
+          "requires_grounding": true,
+          "tags": ["bicycle kick"]
+        },
+        {
+          "id": "EOP-02",
+          "title": "Cut-Away Procedure",
+          "order": 2,
+          "estimated_time": "5m",
+          "requires_grounding": true,
+          "tags": ["cutaway", "total mal"]
+        },
+        {
+          "id": "EOP-03",
+          "title": "Water Landings",
+          "order": 3,
+          "estimated_time": "5m",
+          "requires_grounding": true,
+          "tags": ["drown protocol"],
+          "primary_assets": ["IMG-WATERDANGER1", "IMG-WATERLAND1"]
+        }
+      ]
+    }
+  ],
+  "resource_library": {
+    "IMG-CHUTE1": { "type": "image", "path": "gs://bucket/CAT-GEAR-01_chute_overview.jpg", "label": "Chute Overview" },
+    "IMG-CHUTE-HANDLES1": { "type": "image", "path": "gs://bucket/CAT-GEAR-01_chute_handles.jpg", "label": "Emergency Handles" },
+    "IMG-ALTIMETER1": { "type": "image", "path": "gs://bucket/CAT-GEAR-02_altimeter_example.jpg", "label": "Analog Altimeter" },
+    "IMG-DECWINDOW1": { "type": "image", "path": "gs://bucket/CAT-GEAR-02_decision_window.jpg", "label": "The 2,500ft Window" },
+    "IMG-CUNIM1": { "type": "image", "path": "gs://bucket/CAT-ENV-01_cunim.jpg", "label": "Cumulonimbus Danger" },
+    "IMG-CLOUD1": { "type": "image", "path": "gs://bucket/CAT-ENV-01_cloud_cover.jpg", "label": "Cloud Clearance Rules" },
+    "IMG-WATERDANGER1": { "type": "image", "path": "gs://bucket/CAT-ENV-02_water_dangers.jpg", "label": "Water Hazard Zones" },
+    "IMG-WATERLAND1": { "type": "image", "path": "gs://bucket/CAT-ENV-02_water_land_SOP.jpg", "label": "Water Landing Protocol" }
+  }
+}

@@ -1,0 +1,639 @@
+<SkyHighSyllabus version="3.0">
+
+
+    <ResourceLibrary>
+        <Asset id="IMG-CHUTE1" type="image">
+            <Description>Diagram of a modern skydiving rig with main and reserve containers highlighted.</Description>
+            <Context>Use this to introduce the dual canopy concept.</Context>
+        </Asset>
+        <Asset id="IMG-CHUTE-HANDLES1" type="image">
+            <Description>Close-up of the main ripcord and reserve (silver) handles on a student harness.</Description>
+            <Context>Use this when discussing emergency procedures or gear checks.</Context>
+        </Asset>
+        <Asset id="IMG-ALTIMETER1" type="image">
+            <Description>An analog altimeter face showing the 'Yellow' (caution) and 'Red' (deployment) zones.</Description>
+            <Context>Use this to introduce the student to altimeters.</Context>
+        </Asset>
+		<Asset id="IMG-DECWINDOW1" type="image">
+            <Description>A diagram showing the decision window from 5000ft AGL to 3000ft AGL</Description>
+            <Context>Crucial for teaching altitude awareness and the 3000ft manadtatory deployment height</Context>
+        </Asset>
+		<Asset id="IMG-CUNIM1" type="image">
+            <Description>An image of a cumulonimbus cloud formation.</Description>
+            <Context>Used to show students what these type of clouds look like.</Context>
+        </Asset>
+		<Asset id="IMG-CLOUD1" type="image">
+            <Description>An image of low cloud over a drop zone</Description>
+            <Context>Used to illustate how low cloud dandgerously reduces visibility and manouvering options.</Context>
+        </Asset>
+		<Asset id="IMG-WATERDANGER1" type="image">
+            <Description>An image of a parachute in the water with a jumper beneath it</Description>
+            <Context>Used as a visual aid to reinforce the danger of cocooning and entanglement.</Context>
+        </Asset>
+		<Asset id="IMG-WATERLAND1" type="image">
+            <Description>A diagram of the correct water landing approach, including airborne chest strap release and leg strap release on water contact.</Description>
+            <Context>Visual aid for the water landinmg procedure.</Context>
+        </Asset>
+    </ResourceLibrary>
+	
+	
+	<Config>
+        <course_title>SkyHigh Elementary Parachute Training</course_title>
+    </Config>
+	
+	
+    <Module id="MOD-01" title="Equipment">
+        
+		<Lesson id="GEAR-01" title="Dual Canopy System">
+            <Theory>
+                Skydiving rigs contain two parachutes: a Main and a Reserve.
+				These should be inspected yearly.				
+                The system is designed for total reliability.
+				
+            </Theory>
+            <KeyPoints>
+                The container (the backpack) protects the canopies until deployment.
+                The reserve is packed by a certified rigger.
+				RULE: Never jump without a reserve.
+				Main Ripcord: Located right side, chest height. Pull outwards with right-hand, not crossbody.
+				Reserve Handle: Silver Handle, Located left side, hip height.
+				Protocol: Reserve usage only permitted after a Main Cut-away, using the standard cutaway procedure. (Covered later in emergency procedures)
+            </KeyPoints>
+			<PrimaryResources>
+				IMG-CHUTE1
+				IMG-CHUTE-HANDLES1				
+			</PrimaryResources>			
+        </Lesson>
+        
+        <Lesson id="GEAR-02" title="Altimeter">
+            <Theory>
+                The altimeter is your primary safety instrument. It measures height above the dropzone landing area. Wrist mounted and easy to read.
+            </Theory>
+            <Procedure>
+				CALIBRATION: Always set Altimeter so that zero matches dropzone elevation.
+                CHECK CADENCE: You MUST check your altimeter every 5 seconds during freefall.
+            </Procedure>
+			<PrimaryResources>
+				IMG-ALTIMETER1			
+			</PrimaryResources>	
+        </Lesson>
+    
+	</Module>
+	
+	
+    <Module id="MOD-02" title="Standard Procedures">
+	
+        <Lesson id="SOP-01" title="Environmental Checks">
+            <Theory>We need to check that environmental conditions are safe to jump. These can be verified both visually, and via TAF reports.</Theory>
+            <DangerConditions>
+				Cumulonimmbus: These clouds can be lethal for jumpers due to updrafts, turbulence, rain, hail etc. Jumping is prohibited if there are cumulonimbus clouds within 10 miles of the dropzone.
+				Cloud Cover: No boarding if cloud cover is below 2,000ft AGL
+				Max Wind Speed at DZ: Maximum ground wind speed at drop zone is 20 knots
+			</DangerConditions>
+			<PrimaryResources>
+				IMG-CUNIM1
+				IMG-CLOUD1
+			</PrimaryResources>	
+        </Lesson>
+		
+		<Lesson id="SOP-02" title="Aircraft Exit Procedure">
+            <Theory>A clean exit sets up a stable freefall, and prevents "Tumble" malfunctions</Theory>
+            <Action>Maintain the 'Banana' stable arch in freefall: hips pushed forward, head back, arms symmetrical</Action>
+        </Lesson>
+		
+		<Lesson id="SOP-03" title="Decision Window &amp; Deployment">
+            <Theory>
+				Decision Window: 5,000ft AGL is the start of the Decision Window, reaching down to 3,000 feet
+				Mandatory Deployment Altitude: 3,000ft AGL. Essential parachute is deployed to allow time to reserve deployment in case of failure.
+			</Theory>
+			<PrimaryResources>
+				IMG-DECWINDOW1
+			</PrimaryResources>	
+        </Lesson>
+		
+		<Lesson id="SOP-04" title="Steering &amp; Landing">
+            <Theory>Unlike the older circular chutes, modern ram air chutes are steerable, using toggles attached to the risers. Toggles are used inidividually for steering, and together to "flare" the chute for landing.</Theory>
+            <KeyPoints>
+				Turning: Left/Right toggles pulled down toward the waist will turn the chute.
+				Flare: Both toggles pulled simultaneously at 10ft AGL for a slower safer landing.
+			</KeyPoints>
+        </Lesson>
+		
+    </Module>
+	
+	
+	<Module id="MOD-03" title="Emergency Procedures">
+	
+        <Lesson id="EOP-01" title="Line Twists">
+            <Theory>Line twists can be frightening, but can often be corrected with a simple movement.</Theory>
+            <Procedure>
+				Correction: Grab risers and "bicycle kick" legs.
+				Hard Floor: If line twists not cleared by 2,500ft, initiate Cut-Away.
+			</Procedure>
+        </Lesson>
+		
+		<Lesson id="EOP-02" title="Cut-Away Procedure">
+            <Theory>If the main chute cannot be used, due to a rip, failure to deploy or a line twist that acnnot be cleared, then it must be cut away.</Theory>
+            <Procedure>
+				Standard cutaway procedure: 
+				1. LOOK: Identify the Red Cutaway Handle.
+                2. GRAB: Firmly grip the Red Handle.
+                3. PULL: Extract fully to release main.
+                4. RESERVE: Only once main is clear, Look-Grab-Pull the Silver Handle.
+			</Procedure>
+        </Lesson>
+		
+		<Lesson id="EOP-03" title="Water Landings">
+            <Theory>Landing in water is a dangerous activity. Jumpers have become cocooned in the chute fabric and tangled in the lines and have drowned. Only carry out a water landing if unavoidable.</Theory>
+            <Procedure>
+				Airborne Action: Unclip chest strap. 
+				Water Contact Action: Unclip leg straps only upon touching water. Prevents harness fall-out
+				Allow chute to overtake you. Swim clear immediately. Do not attempt to recover chute.
+			</Procedure>
+			<PrimaryResources>
+				IMG-WATERDANGER1
+				IMG-WATERLAND1
+			</PrimaryResources>	
+        </Lesson>
+	
+	</Module>
+	
+	<ReferenceLibrary id="USPA-SIM-2026">
+        <Section title="General Lessons">
+            Flight Cycle
+			A flight cycle is the parachute’s response during the period of time between an input
+			and the parachute’s return to stabilized full flight. It is important to understand how a
+			flight cycle is created so that you can avoid entering one close to the ground just before
+			landing. Flaring for landing is a one-way street, meaning you can stop pulling down
+			the toggles at any point during the flare stroke if you started it too high, but you cannot
+			go back up.
+			Any input to a canopy, such as turning or pulling down the toggles and letting them
+			back up, initiates a flight cycle. The flight cycle is a normal and predictable flight characteristic of all parachutes. When a flight cycle occurs, the parachute dives, its speed
+			increases beyond that of full flight, and the jumper swings back behind the parachute.
+			The parachute then slows down as the jumper swings forward under the parachute and
+			it returns to full flight.
+			Experiencing a flight cycle up high can be fun. However, a flight cycle just before or
+			during a flare is dangerous because the parachute dives forward and picks up speed,
+			and the effectiveness of the flare is greatly reduced. This is why the proper response to
+			a flare initiated too high is to stop and hold whenever you realize it is too high, then finish
+			the flare forcefully when closer to the ground.
+			Make no more than two attempts or take no longer than 5 seconds, whichever comes
+			first, before initiating emergency procedures.
+			● Premature container opening in freefall: Attempt to locate and deploy the pilot
+			chute first. If you can’t locate the pilot chute after two tries or 5 seconds, or if deploying
+			the pilot chute results in a partial malfunction, cut away and deploy the reserve.
+			● Lost deployment handle: Place your hand on the side of the container and slide it
+			down to the bottom corner. Find the pilot chute and deploy. If you cannot find the
+			pilot chute after two tries or 5 seconds, initiate emergency procedures.
+			● Hard pull: Place your elbow against the container for leverage. If you cannot throw
+			the pilot chute after two tries or 5 seconds, initiate emergency procedures.
+			● Pilot-chute hesitation: Modify the airflow by twisting slightly while looking over
+			your right shoulder. If that doesn’t work, repeat over your left shoulder. If the pilot
+			chute does not launch after two tries or 5 seconds, initiate emergency procedures.
+			Static-line students: Your instructor will review the student-in-tow procedures,
+			which are: Arch and signal to your instructor that you are ready for them to cut your
+			static line. After the static line is cut, deploy your reserve.
+			Remember these critical altitudes: You must decide to cut away by 2,500 feet and
+			then act immediately. Also, if you find yourself below 1,000-foot cutaway hard deck
+			without a functioning canopy, deploy the reserve without cutting away.
+			With your instructor, practice in the training harness to recognize and respond to
+			problems and malfunctions using guidance from Category A—Academics in the
+			first-jump-course topics.
+			At airports, normal flight practices separate aircraft traffic from parachute traffic,
+			but you need to respect runways and aircraft landing patterns. Your instructor will
+			explain your drop zone’s policies about avoiding runways while flying your canopy and
+			after you’ve landed. 
+			A. Exit and Freefall
+			For Review
+			Review the climb-out and exit procedures. Improving your setup, launch, and flyaway
+			on each jump will prepare you for a solo exit in Category D.
+			Review the altitude and body position awareness procedure HAALR. First recognize
+			your heading to confirm you are not turning. Know your altitude by reading the altimeter (AFF and tandem) or counting from exit (IAD and static line). Arch at the hips to
+			improve belly-to-wind stability. Check your leg position—extended to 45 degrees with
+			toes pointed—and adjust as needed. Relax by taking a breath in and out, letting go of
+			unwanted body tension.
+			IAD and static-line students: HAALR might be new to you, as this applies only after
+			you’ve made a successful clear and pull.
+			The goal in freefall for Category C is to refine your neutral body position so you can fall
+			straight down in a column of air. You achieve this by maintaining a heading in a relaxed,
+			neutral position. You should also increase your altitude awareness and initiate a solo
+			pull sequence at your assigned altitude.
+			Review how to maintain a heading which includes:
+			● Pick a heading reference in front of you and keep your eyes on it.
+			● Use HAALR to remain in a relaxed neutral body position and altitude aware.
+			● Use the skill of starting and stopping turns from Category B to stop unintentional
+			turns on Category C jumps.
+			New Stuff
+			AFF students: If you now have only one AFF instructor, the instructor will revise the
+			climb-out procedure for your exit. With one instructor, you may prepare for slightly
+			different results after the launch, as it typically flies vertically a little longer than it
+			would with two instructors.
+			AIR: The freefall rule for Category A and B was: if your AFF instructors are not with you,
+			you must pull immediately. This rule changes for Category C and forward. Now that you
+			have demonstrated awareness and stability, your instructors may release you during
+			the freefall. The new rule is: if you are Altitude aware, In control, and Relaxed (AIR), you
+			may continue in freefall and deploy at the assigned altitude. However, if you are not
+			Altitude aware, In control, and Relaxed (AIR), you have only 5 seconds to fix it. If unsuccessful after 5 seconds, deploy your main canopy immediately.
+			Turbulence on Landing
+			Turbulence is disturbed air that can affect canopy flight and integrity. Due to obstacles
+			and wind direction, turbulence sometimes occurs in the landing area. The effects and
+			likelihood of turbulence increase with the wind speed. Understanding and predicting
+			turbulence will allow you to make safe landing choices. Managing unexpected turbulence on landing is an important skill, but avoiding a landing in turbulence is the best
+			plan for safe landings.
+			Mechanical turbulence is caused by buildings, trees, and hilly or mountainous terrain.
+			Anticipate turbulence 10 to 20 times the height of an obstacle on its downwind side.
+			Wake turbulence is the swirling air currents left behind a moving object from the disturbed airflow caused by its motion, such as wingtip vortices for aircraft. For example,
+			a canopy that lands just before you can generate an invisible wake behind them, which
+			can linger especially in low-wind conditions. You can even find wake turbulence downwind of the propeller wash of an aircraft landing on the runway.
+			Thermal turbulence is caused by thermals, which are pockets of warm air that rise due
+			to the uneven heating of the ground given differences in terrain. The air over certain
+			surfaces such as asphalt, plowed fields, or rocky terrain heats up faster than over other
+			surfaces. As the warmer air rises then mixes with surrounding cooler air, irregularities
+			produce unexpected updrafts and downdrafts.
+			When flying in turbulence at any altitude, maintain the desired heading using smooth
+			but effective toggle input. Fly in full flight unless the canopy’s owner’s manual directs
+			otherwise. If there is turbulence near the ground, prepare to respond quickly with a
+			forceful flare and a PLF.
+			Turbulence can create a flight cycle. Category B introduced the concept of the flight
+			cycle to reinforce that flaring for landing is a one-way street, meaning you can always
+			stop pulling down the toggles at any point during the flare stroke, but cannot go back
+			up. Letting your toggles back up during your flare for landing will cause a flight cycle.
+			Turbulent or gusty winds on landing can also initiate a flight cycle, causing your parachute to dive toward the ground. If this happens just before the flare, the effectiveness
+			of the flare diminishes. Because the flight cycle will cause you to swing back from underneath the parachute as it dives and picks up speed, you must flare forcefully to get back
+			under the parachute and in a position for landing. To help you recognize a flight cycle
+			and respond effectively, you will perform a flight-cycle drill in this category and practice
+			a forceful flare when in a flight cycle.
+			Improving your Landing
+			Downwind landings are better than low turns. On calm days, unexpected wind shifts
+			sometimes require you to land with the wind, instead of against it. Sometimes, jumpers
+			become confused about the pattern and don’t realize they are set up for a downwind
+			landing until they’re on final approach. When faced with deciding between a low turn or
+			a downwind landing, apply your landing priorities and choose to land downwind. When
+			making a downwind landing, flare at the normal altitude, regardless of ground speed,
+			and PLF.
+			Flaring for landing can take a few seconds, so dissecting the parts of the flare can increase your awareness
+			and improve your flare for better landings. During the
+			flare, you are converting forward speed to lift. Flare
+			the canopy quickly to the first stage to slow down and
+			swing under your canopy, flattening the glide. Continue the flare to keep the flat glide. Continue flaring
+			smoothly and completely until landing
+			To prevent an open parachute in the aircraft, take care when you’re leaning back
+			against anything. Move carefully when you’re near or outside the door. If a parachute
+			opens in the plane and the door is closed, secure the parachute, notify your instructor
+			and land with the plane. If the door is open, contain the parachute, close the door, and
+			land with the plane. If the parachute goes out the door, follow immediately to prevent
+			endangering yourself and others. A pre-jump gear check shortly before leaving the aircraft is essential to prevent these occurrences.
+			If landing off the DZ is unavoidable, look for an open, clear, accessible field as early as
+			possible. Decide on an alternate landing area by 2,000 feet. Be aware that power lines
+			often run along roads and between buildings, as well as randomly in open fields. A
+			row of vegetation often hides a fence. Rocks, hills, and other terrain irregularities often
+			remain invisible until just prior to touchdown. Inspect an unfamiliar landing area more
+			closely at every 500-foot interval during descent and continuously below 500 feet. Fly
+			a predictable landing pattern and attempt to land clear of turbulence and obstacles.
+			Prepare for a PLF.
+			Be polite to property owners. Cross only at gates or reinforced areas and leave all gates
+			as they were found. Do not disturb livestock. Walk parallel to and between any rows
+			of crops until reaching the end of the field. Repair or replace any damaged property. If
+			possible, contact the drop zone to give them your status and location.
+			Some skydiving schools are subject to state and local rules or restrictions concerning
+			landing off. Your instructor will explain anything that pertains to you and your drop zone.	
+			CANOPY DRILL: Experience a Flight Cycle
+			● Release brakes and address any routine opening problems.
+			● Look left, turn left.
+			● Look right, turn right.
+			● Flare.
+			● Check altitude, position, and traffic.
+			● Find the holding area, landing area and pattern-entry point.
+			● Fly directly to the holding area.
+			● Check altitude, position and traffic.
+			● Smoothly and evenly pull toggles to ¾ brakes (hip bones) and hold for 5 seconds.
+			● Quickly but smoothly raise the toggles back to full flight to induce the flight cycle.
+			● Take note of the canopy surge and dive as it picks up speed.
+			● Expect 5-7 seconds to pass for the canopy to recover to full flight.
+			● Repeat, if altitude permits, this time with a forceful flare to get back under the
+			parachute for landing (to practice your response to turbulence close to the ground).
+			● Check altitude, position, and traffic.
+			● Stay in the holding area until starting the pattern at 900 feet.
+			● Fly the planned pattern following the landing priorities on final.
+			● Flare to land and PLF
+			A. Exit and Freefall
+			Solo Exit
+			In this category, you will perform a solo
+			exit, achieving stability within 5 seconds.
+			Remember tools to maintain control and
+			stability, including HAALR and AIR.
+			Freefall Turns
+			To turn in freefall, first establish a comfortable, relaxed, neutral body position. Find
+			a point ahead on the horizon as a primary
+			heading reference. Use the start-coaststop (SCS) technique to control your turn.
+			Turns should begin from a neutral body
+			position. Maintain symmetry in your arms
+			and legs, a straight spine, and level shoulders. Breathe, relax, and initiate the turn:
+			Start by pressing one elbow down from
+			the shoulder joint only. Press your arm
+			down no more than 45 degrees. Maintain a
+			neutral leg position during the turn.
+			Coast in the turn by returning to neutral before your desired heading comes into view.
+			Your momentum will continue to turn you while you are neutral, much like your car
+			continues to go forward after taking your foot off the accelerator. During the coast,
+			assess your speed and the distance to your desired heading to determine when you
+			should begin your stop movement.
+			Stop by countering the turn in the opposite direction, then return to a neutral
+			body position.
+			If you go past your intended heading or encounter other difficulties, use HAALR and
+			pick a new heading before starting another turn. Stop all maneuvers by 6,000 feet.
+			Rear-Riser Steering
+			Learning to use your rear risers gives
+			you more options to control your
+			canopy. The rear risers operate the
+			back half of your canopy, and steering with them with your brakes still
+			stowed is the fastest way to change
+			heading right after opening. Rearriser steering is the first of several
+			Canopy-Flight Emergency Procedures (CEPs) you will learn, because
+			it can be useful for avoiding a canopy
+			collision right after opening.
+			To steer with your rear risers, reach
+			up and grab them firmly above
+			where the toggles are stowed. Look
+			in the direction you want to turn,
+			check for traffic, and pull that riser
+			down 4 to 6 inches. In this category,
+			you will perform 90-degree rearriser turns after visually inspecting your canopy but before you unstow your toggles.
+			You will perform them again with your toggles unstowed. Once you have unstowed
+			your toggles, keep them in your hands while performing rear-riser maneuvers. Stop all
+			rear-riser steering practice by 2,000 feet.
+			Accuracy
+			Flying a predictable pattern and arriving at pattern checkpoints at the proper altitude
+			improves your chances of landing where you planned. Being accurate on landing builds
+			your confidence in case you ever land off the drop zone. With the help of your instructor, use the forecasted ground and winds aloft to choose your pattern entry point,
+			checkpoints, and target. A checkpoint includes both an altitude and a landmark.
+			Before your jump, identify your
+			target and draw a 165-foot (50-meter)
+			radius circle around it on the aerial
+			map. Use an interactive online map
+			to help estimate the distance. Land
+			within that area with minimal radio
+			assistance and record the distance
+			from the target in your logbook.
+			C. Emergency
+			Procedure Review
+			You will review canopy problems
+			and malfunctions in the training harness to help you develop
+			quicker recognition of malfunctions
+			and improve your decision-making
+			ability, especially as your assigned pull altitude lowers as you gain experience. The
+			canopy must reliably fly straight, turn, and flare. Decide if your canopy is safe to land by
+			the 2,500-foot decision altitude and execute your emergency procedures if necessary.
+			You should be able to describe procedures for landing on a building: If landing on
+			a roof, flare and PLF. Once you’ve landed, disconnect the RSL, if able, and cut away. If
+			landing your reserve, contain it. Wait for help. If hitting a building broadside, turn the
+			canopy slightly to avoid a direct impact before flaring. Prepare to PLF, flare to slow
+			down, and attempt to strike a glancing blow.
+			Spotting, Wind Drift, and Opening Point
+			You must determine the ground winds and
+			winds aloft before every skydive according to the BSRs (Chapter 2-1.K). Having this
+			information can help you plan your canopy
+			flight and landing pattern. You can obtain
+			current wind information from various
+			weather apps. Ask your instructor which
+			apps provide the most accurate information for your drop zone. The apps provide
+			the direction and strength of the wind at
+			ground level and at various altitudes in
+			either miles per hour or knots. The description of winds includes their direction of
+			origin expressed as a compass heading
+			such as, “The ground winds are from
+			two-seventy degrees.” In this example, the
+			winds are blowing from the west. Thus,
+			your planned landing pattern will have the
+			final approach going west, facing into the
+			wind for landing.
+			To land on the drop zone, you must be
+			able to determine the spot on the ground
+			over which to exit the plane and know how
+			to find that spot while on jump run in the
+			aircraft. Jump run is the predetermined
+			path the aircraft flies prior to exit. Your
+			exit point is the point at which you exit
+			the plane. The direction of jump run is determined by the strength and direction of
+			the winds aloft. The stronger the winds aloft, the farther the exit point will be from
+			the landing area. The wind pushes you during freefall from the exit point toward the
+			landing area. This horizontal movement is known as wind drift. The winds, presence
+			of clouds, the size of your group and your jump type, planned deployment altitude, and
+			many other factors all go into determining your ideal exit point.
+			Spotting is the term for selecting an exit point while accounting for the effect of winds
+			aloft in freefall and during canopy flight. The exit point is also known as the spot. Spotting starts with determining the best opening point for canopies, which is the ground
+			point of reference over which you open your parachute. This point is determined from
+			wind forecasts for different altitudes. The stronger the wind is at the exit altitude and
+			during freefall, the farther upwind of the holding and landing area the exit point, or
+			spot, will be. This is also true for the canopy opening point, as it also should be upwind
+			of your holding and landing area. If you open upwind of your holding area, the wind will
+			help you get there. 
+			The pilot, instructors, and drop zone staff determine the direction of jump run and the
+			location of the spot based upon the forecasted and observed winds. The direction of
+			jump run and the location of the spot may change throughout the day as the weather
+			and winds change.
+			The first step in learning to spot is determining what is “straight down” and predicting
+			how the plane is moving across the ground. First, look straight out at the horizon and
+			draw an imaginary line back to you. Then look forward toward where you are headed
+			and draw an imaginary line back to you. The junction of the two perpendicular lines
+			from the horizon marks the point straight below the aircraft. Before exiting, you must
+			also verify that the area below you is clear of clouds and aircraft, and to do so effectively, you must get your head completely outside the aircraft.
+			You will observe your instructor’s spotting procedures, and then you will demonstrate
+			the technique for looking straight down from the aircraft during jump run. You should
+			be able to determine whether the aircraft is on the intended jump run and when you
+			are at your desired exit point. 
+			You can note your freefall time in your logbook based on your exit altitude by assuming an average terminal velocity of 120 mph. The first 1,000 feet of your freefall takes
+			approximately 10 seconds as you reach terminal velocity. Each 1,000 feet after that
+			takes approximately 5 seconds. For example: You exit the airplane at 5,000 feet and
+			deploy your canopy at 3,000 feet. The first 1,000 feet takes 10 seconds, and the next
+			1,000 feet takes 5 seconds. You can log 15 seconds of freefall time.
+			CANOPY DRILL: Rear-Riser Turns
+			● Correct minor canopy problems (line twist, slider, end cells) using rear risers with brakes
+			stowed.
+			● Check altitude, position, and traffic.
+			● Locate the holding area and turn toward it. Reach to the top of the risers and grab
+			where the lines meet the risers.
+			● Look right, turn right 90 degrees using rear riser.
+			● Check altitude, position, and traffic.
+			● Repeat to the left.
+			● Check altitude, position, and traffic.
+			● Repeat turns if altitude permits.
+			● Unstow the brakes above 2,500 feet, do a controllability check and fly to the holding
+			area.
+			● With your hands in your toggles, reach to the top of the risers and grab the risers
+			where the lines meet the risers.
+			● Look right, turn right 90 degrees using rear riser.
+			● Check altitude, position, and traffic.
+			● Repeat to the left.
+			● Check altitude, position, and traffic.
+			● Repeat turns right and left if altitude permits.
+			● Return to steering with the toggles by 2,000 feet.
+			● Fly the planned pattern, flare and PLF if needed.
+			Stalls
+			A stall is an aerodynamic event where the wing loses its ability to produce lift. When
+			a ram-air parachute stalls, it also loses pressurization, and the canopy will no longer
+			be able to support the weight of the jumper. To avoid stalling close to the ground in a
+			flare, you should know the stall point on any canopy you jump, especially if the canopy
+			is new to you. For this reason, you need to perform all stall practice above your 2,500-foot
+			decision altitude.
+			Too much input or input applied too abruptly using either the toggles or the rear risers
+			can cause a stall. Applying too much input is associated with a slow-speed stall, where
+			the canopy loses airspeed and eventually stalls. Applying input too abruptly is associated
+			with a high-speed stall, where the stall occurs more suddenly and at a higher airspeed.
+			Before intentionally stalling with toggles, make sure your canopy is in full flight and
+			flying straight. Slowly pull the toggles down to full arm extension until you feel the onset
+			of the stall, a feeling similar to rocking back in a chair and falling backward. After holding
+			the toggles all the way down for 5 to 6 seconds, the stall will develop further, and the
+			canopy will become bowtie shaped. The air will leave the canopy, and you will begin
+			descending at a high rate. Some student canopies are configured to prevent a toggle
+			stall, so your canopy may not develop a full one. Recover from a fully developed toggle
+			stall by slowly raising the toggles up a few inches until the canopy inflates and returns
+			to slow flight. Avoid raising the toggles too quickly, which can cause the canopy to surge,
+			dive, or spin into line twists.
+			Stalling using the rear risers works similarly, except that you need to pull down only 5
+			or 6 inches on both risers. For now, you will practice only toggle stalls; your B-license
+			canopy training addresses rear-riser stalls.
+			Adjusting the Pattern for Accuracy
+			Following a predictable, well-planned landing pattern helps maintain safe traffic flow,
+			reduces the risk of canopy collisions, and improves your accuracy on landing. Improving
+			your accuracy increases your options for safe landing areas and lowers your stress in
+			case you need to land off the drop zone.
+			To refine your accuracy, make small adjustments to your pattern checkpoints over a
+			series of jumps. First, plan your checkpoints and target for your first jump of the series.
+			Based on where you landed on that jump, have your instructor make a suggestion on
+			adjusting one or more of your checkpoints: the pattern entry point, the entry point to
+			the base leg, or the entry point to your final approach. They may have you adjust either
+			the altitude or the landmark of these checkpoints. Make your next jump in similar wind
+			conditions with this adjustment. Keep repeating this process to refine your accuracy for
+			those wind conditions. Record your checkpoints and wind conditions in your logbook in
+			order to track your progress.
+			Flare Techniques
+			Effective flare techniques vary depending on the design and size of a parachute,
+			but the basics of flaring apply to any technique. You can refine your flare technique
+			by expanding on the basics using the
+			following strategies:
+			Being in the PLF position for landing allows
+			you to maintain your heading and stay
+			level in your harness during the landing
+			flare. Except for small corrections on final
+			approach, keep your toggles all the way
+			up, in full glide, for 8 to 10 seconds before
+			starting your flare. This will help the canopy
+			produce more lift when you flare. Keep your chin level, looking at the point mid-way
+			to the horizon, to better judge the flare height. Start the flare when your feet reach an
+			altitude of approximately twice your height above the ground. Flare with your hands
+			close to your body, bringing your elbows back as your hands come down. Continue
+			to push your hands evenly down the side of your thighs to full arm extension. It is
+			important to fully finish your flare. Finish with your feet approximately 1 to 3 feet
+			above the ground. Hold the flare all the way down during a PLF or for a few steps after
+			touch down.
+			Two common flare techniques are the continuous flare and the staged flare. Most
+			larger canopies, those 220 square feet or more, flare effectively with either technique.
+			The continuous flare is one smooth motion that should take about the same time that
+			it takes to count to five. You may count slower or faster depending on wind conditions
+			or your sight picture. Regardless of the speed of your flare, you should time it to be
+			smooth and consistent overall, responding to how your canopy is performing. 
+			To find the sweet spot for the first stage of your flare, practice at a safe altitude in your
+			holding area. Start with a medium-speed input and bring the toggles down to where
+			your hands are even with your chest strap—this gives you a solid baseline. On each
+			practice flare, adjust the speed or depth slightly to see how your canopy reacts. The goal
+			is to pendulum smoothly forward under the canopy until the nose is directly above you.
+			Pay attention to your hand position so you can repeat what works during your actual
+			landing. Once you reach this point in your flare, pause and assess your height above
+			the ground. Start the second stage of this two-stage flare when you are at the proper
+			height to smoothly and fully finish the flare with your feet approximately 1 to 3 feet
+			above the ground.
+			Your instructor will determine the best flare technique for your canopy and practice
+			with you for the landing on your next jump. You will practice finding the sweet spot
+			above 2,500 feet on your next jump, even if you use a continuous flare for landing.
+			Procedures for High-Wind Landings
+			Winds can change from the time you leave the plane to when you are under canopy. If
+			you land in high winds, PLF and then pull one toggle all the way in as quickly as possible
+			until the canopy collapses. You risk injury when being dragged after landing in high
+			winds. When you land and the canopy is dragging you and you cannot collapse it, disconnect your RSL, if possible, and cut away.
+			Your canopy may dive or collapse behind any obstacle that generates turbulence.
+			Thus, if landing in high winds, plan your final approach and choose a landing spot
+			with the least potential for turbulence and the greatest distance between you and
+			any obstacle
+			CANOPY DRILL #2: Toggle-Stall-Point Practice
+			● Check altitude, position, and traffic
+			● From full flight, slowly pull the toggles down to full arm extension
+			● Hold the toggles down for 5-6 seconds until you feel the onset of the stall, a feeling
+			like rocking back in a chair and falling backward, which signals that you have found
+			the stall point
+			● As the stall develops further and the canopy begins to look like a bowtie, the air will
+			leave the canopy, and you will begin descending at a high rate.
+			● Recover from a fully developed toggle stall by slowly and symmetrically raising the
+			toggles up a few inches until the canopy inflates and returns to slow flight
+			● Continue to raise the toggles up 6 inches at a time to return to full flight
+			● Repeat if altitude and position permit
+			● Stop all maneuvers above your decision altitude of 2,500 feet
+			● Fly the planned pattern and land within 165 feet (50 meters) of target
+			● Measure your distance from the planned landing point and log it
+			● Note: Some student canopies are configured to prevent a toggle stall, so even
+			with your toggles down at full arm extension for more than 5-6 seconds, a full
+			toggle stall may not develop.
+			A. Exit and Freefall
+			The Flat Track
+			Before beginning to jump with others, you
+			need to learn to generate horizontal speed
+			with minimal altitude loss, a skill called “tracking.” This skill allows you to create separation
+			from others before opening your parachute.
+			You will perform a flat track, maintaining heading within 30 degrees. Focus on
+			heading first, then pitch; speed will come
+			with practice.
+			First, locate a point on the horizon to establish your heading. Smoothly and fully extend
+			both legs with your toes pointed to initiate forward motion, and steer to maintain
+			heading. Roll your shoulders and flatten your
+			arch to control your pitch. Fully extend your
+			arms to the side, pressing them down level
+			with your hips. Once you can control your
+			heading and pitch, you can speed up your
+			track by extending your legs more quickly
+			and sweeping your arms back slightly.
+			Stop your track by passing through neutral,
+			extending your arms forward and down
+			slightly. Return to neutral.
+			Practice entering and refining an on-heading 5-second track, turning 180 degrees after
+			each attempt and repeating as altitude permits. Exit from a position facing up the line
+			of flight, such as a floater exit. Turn 90 degrees to start tracking perpendicularly to the
+			line of flight. This allows you to avoid those who exited before or after you, up and down
+			the line of flight. Always plan tracking dives with other groups in mind.
+			Knowing how your canopy flies in different modes of flight can be useful for adjusting your descent. For example, flying in half brakes before you enter the pattern can
+			help you stay a safe vertical distance from other canopies. Flying your downwind leg in
+			half brakes can flatten your glide to conserve altitude in case you find yourself lower
+			than planned. When flying in brakes, expect a different a glide path than what you
+			normally experience.
+			CEP—Braked Turns
+			Braked turns are one of the most important canopy-flight emergency procedures
+			(CEPs) you can practice. Using braked turns, also called “flat turns,” you can change
+			direction under canopy while losing as little altitude as possible. A braked turn also
+			slows your forward speed while maintaining a stable, level wing. If you find yourself
+			landing in a tight or unfamiliar landing area and you must turn to avoid an obstacle at a
+			low altitude, you can use a braked turn. In this emergency situation, executing a braked
+			turn instead of a turn from full flight allows you to change heading and still honor the
+			first landing priority: landing with a level wing.
+			Start by pulling both toggles down evenly to the half-braked position and hold for a few
+			seconds. Push one toggle down slightly to initiate a 90-degree turn. Practice changing
+			heading as quickly as possible while keeping the wing level. You will practice 90-degree
+			braked turns in this category, but you may need only a 45-degree turn or less, followed
+			by a braked flare, to avoid an obstacle on landing.
+			CEP—Half-Braked Flares
+			Practicing braked flares can help you discover the effectiveness of the flare when finishing from a braked position. This CEP is useful in several situations, including when
+			you initially flare too high and need to hold in brakes for a few seconds before finishing;
+			after you use a braked turn to avoid an obstacle on landing; or when you turn too close
+			to the ground.
+			First, for reference, start by performing a flare from full flight using your normal landing
+			technique. Note the pitch change of your parachute and your swing forward under the
+			parachute at the bottom of your flare stroke. Start a half-braked flare by pulling the
+			toggles to a half-braked position and hold for a few seconds. Then, from that position,
+			flare more quickly and forcefully than you would for your normal flare stroke. Compare
+			the flares you just practiced, especially the parachute’s pitch change and your swing
+			forward. Practice another braked flare, adjusting the speed and force to most closely
+			match the effect of your flare from full flight. Braked flares generally need to be faster
+			and more forceful than a flare from full flight to get an equivalent response.
+        </Section>
+    </ReferenceLibrary>
+
+	
+</SkyHighSyllabus>
