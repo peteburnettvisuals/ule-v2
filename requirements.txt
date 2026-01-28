@@ -8,3 +8,4 @@ streamlit-folium
 google-cloud-firestore
 streamlit-authenticator
 streamlit-echarts
+google-cloud-aiplatform

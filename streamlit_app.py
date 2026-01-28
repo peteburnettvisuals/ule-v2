@@ -9,6 +9,8 @@ from google.oauth2 import service_account
 import streamlit_authenticator as stauth
 import time
 from streamlit_echarts import st_echarts
+import vertexai
+from vertexai.generative_models import GenerativeModel, ChatSession
 
 def local_css(file_name):
     with open(file_name) as f:
@@ -16,7 +18,7 @@ def local_css(file_name):
 
 local_css("style.css")
 
-# --- 1. TACTICAL SECRET & DB LOADER (MAINTAINED) ---
+# --- DB LOADER (MAINTAINED) ---
 try:
     credentials_info = st.secrets["gcp_service_account_firestore"]
 except (st.errors.StreamlitSecretNotFoundError, KeyError):
@@ -29,6 +31,27 @@ if not credentials_info:
 
 gcp_service_creds = service_account.Credentials.from_service_account_info(credentials_info)
 db = firestore.Client(credentials=gcp_service_creds, project=credentials_info["project_id"], database="uledb")
+
+# ---- VERTEX LOADER ---------------
+
+vertex_creds_info = st.secrets["gcp_service_account_vertex"]
+vertex_credentials = service_account.Credentials.from_service_account_info(vertex_creds_info)
+
+vertexai.init(
+    project=vertex_creds_info["project_id"],
+    location="europe-west2", # Verify your region
+    credentials=vertex_credentials
+)
+
+
+#### Connection test
+
+try:
+    test_model = GenerativeModel("gemini-2.0-flash-001")
+    test_resp = test_model.generate_content("Ping")
+    st.success(f"Vertex AI Connected: {test_resp.text}")
+except Exception as e:
+    st.error(f"Vertex AI Handshake Failed: {e}")
 
 # --- 2. ENGINE UTILITIES ---
 def load_universal_schema(file_path):
@@ -71,7 +94,8 @@ def get_instructor_response(user_input, lesson_cartridge):
     4. Once the content is explained, transition to the 'Test Scenario' provided in the cartridge.
     5. If the student successfully navigates the scenario, append [VALIDATE: ALL].
 
-    STRICT: Use ONLY the information in the cartridge. Do not hallucinate external skydiving facts or diver deeper than the material supplied. 
+    IMPORTANT! Use ONLY the information in the cartridge. 
+    IMPORTANT! Do not hallucinate external skydiving facts or diver deeper than the material supplied. 
     If you want the UI to show an image, you MUST output the [[filename.jpg]] tag.
     """
 
