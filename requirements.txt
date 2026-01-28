@@ -6,6 +6,6 @@ lxml
 folium
 streamlit-folium
 google-cloud-firestore
-streamlit-authenticator
+streamlit-authenticator==0.3.2
 streamlit-echarts
-google-cloud-aiplatform
+google-cloud-aiplatform>=1.57.0

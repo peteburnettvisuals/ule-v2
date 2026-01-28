@@ -11,7 +11,8 @@ import time
 import datetime
 from streamlit_echarts import st_echarts
 import vertexai
-from vertexai.generative_models import GenerativeModel, ChatSession, caching
+from vertexai.generative_models import GenerativeModel, ChatSession
+from vertexai.preview import caching
 
 # ----- CSS Loader -------------
 
