@@ -100,7 +100,7 @@ def initialize_engine():
 # ------- JSON Manifest Loader -----------------
 
 def load_manifest():
-    with open("manifest.json", "r") as f:
+    with open("skyhigh-manifest.json", "r") as f:
         return json.load(f)
 
 manifest = load_manifest()
