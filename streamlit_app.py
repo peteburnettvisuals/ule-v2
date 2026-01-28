@@ -246,7 +246,6 @@ if not st.session_state.get("authentication_status"):
             # UPDATED: Use the 'fields' parameter to relabel the Username box to Email
             auth_result = authenticator.login(
                 location="main", 
-                key="spl_login_form",
                 fields={'Form name': 'Login', 'Username': 'Email', 'Password': 'Password'}
     )
             
@@ -275,50 +274,54 @@ if not st.session_state.get("authentication_status"):
 
         with tab_register:
             st.subheader("New User Registration")
+            # In 0.3.x, you can use the built-in widget, but a custom form 
+            # gives you more control over your specific SaaS fields (Exp/Asp).
             with st.form("registration_form"):
-                new_email = st.text_input("Email")
-                new_company = st.text_input("Company Name")
+                new_email = st.text_input("Corporate Email (Username)")
+                new_company = st.text_input("Training Organization")
                 new_name = st.text_input("Full Name")
-                new_password = st.text_input("Password", type="password")
-                u_experience = st.text_area("What is your current experience level in this field?", placeholder="e.g., Total beginner...")
-                u_aspiration = st.text_area("What do you hope to achieve with this training?", placeholder="e.g., I want to become a solo jumper...")
-                        
-                submit_reg = st.form_submit_button("Register")
+                new_password = st.text_input("Secure Password", type="password")
+                u_experience = st.text_area("Experience Level", placeholder="e.g., Total beginner...")
+                u_aspiration = st.text_area("Learning Goals", placeholder="e.g., Solo certification...")
+                
+                submit_reg = st.form_submit_button("Initialize Profile")
                 
                 if submit_reg:
                     if new_email and new_password and new_company:
-                        # 1. THE SECURITY SEAL: Hash the password
-                        hashed_password = stauth.Hasher.hash(new_password)
-                        
-                        # 2. DATA COMMIT: Save with the new profile fields
-                        db.collection("users").document(new_email).set({
-                            "email": new_email,
-                            "company": new_company,
-                            "full_name": new_name,
-                            "password": hashed_password,
-                            "experience": u_experience,
-                            "aspiration": u_aspiration,
-                            "created_at": firestore.SERVER_TIMESTAMP,
-                        })
-                        
-                        # 3. HYDRATION: Manually set session state to bypass the login screen
-                        st.session_state["u_profile"] = f"Experience: {u_experience}. Goals: {u_aspiration}"
-                        st.session_state["authentication_status"] = True
-                        st.session_state["username"] = new_email
-                        st.session_state["name"] = new_name
-                        st.session_state["company"] = new_company
-                        
-                        # 4. INITIALIZE progress containers
-                        st.session_state.all_histories = {}
-                        st.session_state.lesson_scores = {}
-                        st.session_state.archived_status = {}
-                        st.session_state.active_lesson = "CAT-GEAR-01" 
-                        
-                        st.success(f"Welcome {new_name}! System initialized for {new_company}.")
-                        time.sleep(1.5)
-                        st.rerun() 
+                        try:
+                            # 1. HASH & COMMIT: Use the Hasher to secure the password
+                            hashed_password = stauth.Hasher([new_password]).generate()[0]
+                            
+                            # 2. FIRESTORE SYNC: Save the structural profile
+                            db.collection("users").document(new_email).set({
+                                "email": new_email,
+                                "company": new_company,
+                                "full_name": new_name,
+                                "password": hashed_password,
+                                "experience": u_experience,
+                                "aspiration": u_aspiration,
+                                "created_at": firestore.SERVER_TIMESTAMP,
+                            })
+                            
+                            # 3. ENGINE HYDRATION: Prime the session state
+                            st.session_state["u_profile"] = f"Experience: {u_experience}. Goals: {u_aspiration}"
+                            st.session_state["authentication_status"] = True
+                            st.session_state["username"] = new_email
+                            st.session_state["name"] = new_name
+                            st.session_state["company"] = new_company
+                            
+                            # 4. INITIALIZE progress containers
+                            st.session_state.all_histories = {}
+                            st.session_state.archived_status = {}
+                            st.session_state.active_lesson = "GEAR-01" 
+                            
+                            st.success(f"Welcome {new_name}! Training system ready.")
+                            time.sleep(1.5)
+                            st.rerun() 
+                        except Exception as e:
+                            st.error(f"Registration Interrupted: {e}")
                     else:
-                        st.warning("Please fill in all mandatory fields.")
+                        st.warning("All mandatory fields required for certification tracking.")
 
 else:
 
