@@ -49,7 +49,7 @@ vertexai.init(
 # Logic for your ULE SaaS roadmap
 try:
     # Points to the latest stable 2.5 Lite engine
-    test_model = GenerativeModel("gemini-2.5-flash-lite") 
+    test_model = GenerativeModel("gemini-2.5-flash") 
     test_resp = test_model.generate_content("Ping")
     st.success(f"Vertex AI (2.5 Lite) Connected: {test_resp.text}")
 except Exception as e:
