@@ -156,8 +156,6 @@ manifest = load_manifest()
 
 
 # --- 3. SESSION STATE INITIALIZATION (CONSOLIDATED) ---
-if "model" not in st.session_state:
-    st.session_state.model = initialize_engine()
 
 # --- THE LESSON LEDGER ---
 if "active_lesson" not in st.session_state:
@@ -185,7 +183,6 @@ if "chat_history" not in st.session_state:
     # This acts as the 'Live' buffer for the current lesson's display
     st.session_state.chat_history = []
 
-# This must run before any other function calls session_state
 if "user_profile" not in st.session_state:
     st.session_state.user_profile = {"experience": "Novice", "goal": "A-License"}
 
@@ -508,28 +505,26 @@ if not st.session_state.get("authentication_status"):
                 fields={'Form name': 'Login', 'Username': 'Email', 'Password': 'Password'}
     )
             
-            # 2. THE SILENT GATE: Catch the login the moment it happens
+            # --- THIS IS THE CRITICAL SPOT ---
             if st.session_state.get("authentication_status"):
-                user_email = st.session_state["username"]
+                user_email = st.session_state["username"] 
                 user_info = credentials_data['usernames'].get(user_email, {})
                 
-                # Hydrate the missing key that caused the crash
-                st.session_state.user_profile = {
-                    "experience": user_info.get("experience", "Novice"),
-                    "goal": user_info.get("aspiration", "Certification")
-                }
-                
-                # Update the prompt string for the AI
-                st.session_state.u_profile = f"Experience: {st.session_state.user_profile['experience']}. Goals: {st.session_state.user_profile['goal']}"
-                
+                # A. HYDRATE: Fill the profile data first
+                st.session_state["name"] = user_info.get("name", "Student")
+                st.session_state["u_profile"] = f"Experience: {user_info.get('experience', 'Novice')}. Goals: {user_info.get('aspiration', 'A-License')}"
+                st.session_state["user_profile"] = user_info # Safety backup
 
-                # NEW: Restore previous session from DB
-                with st.spinner("Loading your data ..."):
+                # B. TRIGGER ENGINE: Now that we have the profile, fire up Vertex
+                if "model" not in st.session_state:
+                    with st.spinner("Warming up Flight Instructor Engine..."):
+                        st.session_state.model = initialize_engine()
+
+                # C. RESTORE: Load previous lesson data
+                with st.spinner("Syncing Training Ledger..."):
                     load_audit_progress()
-                
-                st.toast(f"Welcome back! Loading your account data ...")
-                time.sleep(1) 
-                st.rerun() # This triggers the 'else' block immediately
+                time.sleep(1)
+                st.rerun()
                 
             elif st.session_state.get("authentication_status") is False:
                 st.error("Invalid Credentials. Check your email and password.")
