@@ -402,21 +402,37 @@ def switch_lesson(new_lesson_id):
 def process_ai_response(response_text):
     current_lesson = st.session_state.active_lesson
     
-    # Update the LIVE buffer
+    # 1. Update the LIVE buffer
     st.session_state.chat_history.append({"role": "model", "content": response_text})
     
-    # SYNC to the Ledger for persistence
+    # 2. SYNC to the Ledger for persistence
     st.session_state.lesson_chats[current_lesson] = st.session_state.chat_history
     
-    # Detect surfaced assets and pin them to the specific lesson deck
-    found_assets = re.findall(r"\[(AssetID:.*?)\]", response_text)
-    st.session_state.lesson_assets[current_lesson].extend(found_assets)
-
-    # CHECK FOR MASTERY
+    # 3. BETTER ASSET DETECTION
+    # This regex catches [IMG-XXXX], [AssetID: IMG-XXXX], or [AssetID:IMG-XXXX]
+    # It focuses on the "IMG-" prefix which is your naming convention
+    found_assets = re.findall(r"\[(?:AssetID:\s*)?(IMG-.*?)\]", response_text)
+    
+    if found_assets:
+        # Initialize the list for this lesson if it doesn't exist
+        if current_lesson not in st.session_state.lesson_assets:
+            st.session_state.lesson_assets[current_lesson] = []
+            
+        # Add new assets to the historical deck for this lesson
+        st.session_state.lesson_assets[current_lesson].extend(found_assets)
+        
+        # UPDATE THE HUD: Set the most recent asset as the active visual
+        st.session_state.active_visual = found_assets[-1]
+    
+    # 4. CHECK FOR MASTERY
     if "[VALIDATE: ALL]" in response_text:
-        # 1. Update Firestore lesson status to 'Passed'
+        # Update Firestore lesson status to 'Passed'
         update_lesson_mastery(current_lesson, status="Passed")
-        # 2. Trigger UI Celebration
+        
+        # Update local status for the sidebar roadmap immediately
+        st.session_state.archived_status[current_lesson] = True
+        
+        # Trigger UI Celebration
         st.balloons()
         st.success(f"Lesson {current_lesson} Complete!")
 
@@ -805,14 +821,19 @@ else:
             st.markdown("<div style='margin-top: 3.85rem;'></div>", unsafe_allow_html=True)
             st.subheader("Reference Deck")
             
-            asset_id = st.session_state.get("active_visual")
-            if asset_id:
-                # Get the secure cloud link
-                signed_url = resolve_asset_url(asset_id)
+            raw_asset_id = st.session_state.get("active_visual")
+            
+            if raw_asset_id:
+                # CLEANER: Remove any accidental brackets or "AssetID:" prefixes 
+                # just in case they slipped through the regex
+                clean_id = raw_asset_id.replace("[", "").replace("]", "").replace("AssetID:", "").strip()
+                
+                signed_url = resolve_asset_url(clean_id)
                 
                 if signed_url:
-                    st.image(signed_url, caption=f"Resource: {asset_id}", use_container_width=True)
+                    st.image(signed_url, caption=f"Resource: {clean_id}", use_container_width=True)
                 else:
-                    st.warning(f"Resource {asset_id} not found in cloud repository.")
+                    # DEBUG: This helps you see exactly what the code is looking for in the JSON
+                    st.error(f"Lookup Failed: Key '{clean_id}' not found in manifest.")
             else:
                 st.info("Awaiting visual guidance from the instructor...")
