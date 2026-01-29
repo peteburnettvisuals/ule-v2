@@ -195,21 +195,23 @@ if "authentication_status" not in st.session_state:
 # --- 4. THE AI INSTRUCTOR ENGINE (VERTEX CACHE VERSION) ---
 
 def get_instructor_response(user_input):
+    # SAFETY GATE: If the model isn't ready, initialize it now
+    if "model" not in st.session_state:
+        with st.spinner("Re-establishing link to Flight Instructor..."):
+            st.session_state.model = initialize_engine()
+            
     model = st.session_state.model 
     
     if "chat_session" not in st.session_state:
-        # Pull dynamic profile data for the hidden handshake
         u_name = st.session_state.get("name", "Student")
         u_profile = st.session_state.get("u_profile", "Novice")
         
-        # Create the thread with the Personalized Handshake
         handshake = [
             Content(role="user", parts=[Part.from_text(f"INIT SESSION: {u_name}. {u_profile}")]),
             Content(role="model", parts=[Part.from_text(f"Ready. Hello {u_name}.")])
         ]
         st.session_state.chat_session = model.start_chat(history=handshake)
 
-    # Context prefix ensures the AI stays on the correct XML branch
     context_prefix = f"[FOCUS LESSON: {st.session_state.active_lesson}] "
     response = st.session_state.chat_session.send_message(context_prefix + user_input)
     return response.text
@@ -743,21 +745,26 @@ else:
             
             lesson_name = current_lesson['title']
 
-            # 1. THE HANDSHAKE (Now using the Cache)
-            if st.session_state.get("needs_handshake", False):
-                # We don't send the XML text anymore; we just set the context ID
-                handshake_prompt = f"INITIATE_LESSON: {st.session_state.active_lesson}. Greet the student and begin."
-                response_text = get_instructor_response(handshake_prompt)
-                
-                # Resolve initial visuals from the [AssetID] tags
-                asset_match = re.search(r"\[(IMG-.*?)\]", response_text)
-                if asset_match:
-                    st.session_state.active_visual = asset_match.group(1)
-                
-                # Clean response for UI (removes brackets)
-                ui_text = re.sub(r"\[.*?\]", "", response_text).strip()
-                st.session_state.chat_history = [{"role": "model", "content": ui_text}]
-                st.session_state.needs_handshake = False
+            if "model" in st.session_state:
+                # 1. THE HANDSHAKE (Now using the Cache)
+                if st.session_state.get("needs_handshake", False):
+                    # We don't send the XML text anymore; we just set the context ID
+                    handshake_prompt = f"INITIATE_LESSON: {st.session_state.active_lesson}. Greet the student and begin."
+                    response_text = get_instructor_response(handshake_prompt)
+                    
+                    # Resolve initial visuals from the [AssetID] tags
+                    asset_match = re.search(r"\[(IMG-.*?)\]", response_text)
+                    if asset_match:
+                        st.session_state.active_visual = asset_match.group(1)
+                    
+                    # Clean response for UI (removes brackets)
+                    ui_text = re.sub(r"\[.*?\]", "", response_text).strip()
+                    st.session_state.chat_history = [{"role": "model", "content": ui_text}]
+                    st.session_state.needs_handshake = False
+                    st.rerun()
+            else:
+                st.info("🔄 Syncing with SkyHigh AI Instructor...")
+                st.session_state.model = initialize_engine()
                 st.rerun()
 
             # 2. CHAT DISPLAY
