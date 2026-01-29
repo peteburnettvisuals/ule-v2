@@ -185,6 +185,16 @@ if "chat_history" not in st.session_state:
     # This acts as the 'Live' buffer for the current lesson's display
     st.session_state.chat_history = []
 
+# This must run before any other function calls session_state
+if "user_profile" not in st.session_state:
+    st.session_state.user_profile = {"experience": "Novice", "goal": "A-License"}
+
+if "u_profile" not in st.session_state:
+    st.session_state.u_profile = "Experience: Novice. Goal: A-License"
+
+if "authentication_status" not in st.session_state:
+    st.session_state.authentication_status = None
+
 # --- 4. THE AI INSTRUCTOR ENGINE (VERTEX CACHE VERSION) ---
 
 def get_instructor_response(user_input):
