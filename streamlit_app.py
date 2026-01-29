@@ -300,24 +300,22 @@ def load_audit_progress():
 
 # New Asset Resolver helper
 def resolve_asset_url(asset_id):
-    """Generates a secure, temporary Signed URL from the ule2/ subfolder."""
+    """Stitches ule2/ folder to the manifest filename and signs the URL."""
     asset_info = manifest['resource_library'].get(asset_id)
     if not asset_info:
         return None
     
-    # Target the specific subfolder in your bucket
-    # Assuming 'path' in JSON is just the filename (e.g., 'CAT-GEAR-01_chute.jpg')
-    filename = asset_info['path']
+    # Get the filename from JSON 'path' key
+    raw_path = asset_info['path']
+    # Clean the path just in case 'gs://' or 'ule2/' is already there
+    filename = raw_path.split("/")[-1] 
     blob_path = f"ule2/{filename}" 
     
     blob = bucket.blob(blob_path)
-    
     try:
-        # Generate a URL that expires in 5 minutes
-        url = blob.generate_signed_url(expiration=datetime.timedelta(minutes=5))
-        return url
+        # Create the temporary link for the Streamlit frontend
+        return blob.generate_signed_url(expiration=datetime.timedelta(minutes=5))
     except Exception as e:
-        st.error(f"GCS Fetch Error: {e}")
         return None
 
 # -- User Profile Handshake Initialisation ------------
@@ -759,19 +757,18 @@ else:
                 with chat_container.chat_message("assistant" if msg["role"] == "model" else "user"):
                     st.write(msg["content"])
 
-            # 3. USER INPUT PROCESSING
+            # 3. USER INPUT PROCESSING (Updated regex and sync)
             if user_input := st.chat_input("Ask a question...", key=f"chat_{st.session_state.active_lesson}"):
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
-                # Call the engine (which uses the Frankfurt Cache)
                 raw_response = get_instructor_response(user_input)
 
-                # Update Visuals: Look for [IMG-XXXX] in the AI's reply
-                asset_match = re.search(r"\[(IMG-.*?)\]", raw_response)
+                # Detect surfaced assets: Look for [AssetID: IMG-XXXX] or just [IMG-XXXX]
+                asset_match = re.search(r"\[(?:AssetID:\s*)?(IMG-.*?)\]", raw_response)
                 if asset_match:
-                    st.session_state.active_visual = asset_match.group(1)
+                    st.session_state.active_visual = asset_match.group(1).strip()
 
-                # Logic Gates: Check for completion or scoring tags
+                # Logic Gates: Check for completion
                 if "[VALIDATE: ALL]" in raw_response:
                     st.session_state.archived_status[st.session_state.active_lesson] = True
                     st.balloons()
@@ -779,7 +776,9 @@ else:
                 # Clean and Save
                 ui_response = re.sub(r"\[.*?\]", "", raw_response).strip()
                 st.session_state.chat_history.append({"role": "model", "content": ui_response})
-                st.session_state.all_histories[st.session_state.active_lesson] = st.session_state.chat_history
+                
+                # CRITICAL: Sync live buffer to the ledger
+                st.session_state.lesson_chats[st.session_state.active_lesson] = st.session_state.chat_history
                 
                 save_audit_progress()
                 st.rerun()
