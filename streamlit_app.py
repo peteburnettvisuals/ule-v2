@@ -300,14 +300,16 @@ def load_audit_progress():
 
 # New Asset Resolver helper
 def resolve_asset_url(asset_id):
-    """Generates a secure, temporary Signed URL from GCS for the given AssetID."""
+    """Generates a secure, temporary Signed URL from the ule2/ subfolder."""
     asset_info = manifest['resource_library'].get(asset_id)
     if not asset_info:
         return None
     
-    # Extract the filename from the path in your JSON (e.g., 'images/canopy.png')
-    # If your JSON path is just the filename, use that.
-    blob_path = asset_info['path'] 
+    # Target the specific subfolder in your bucket
+    # Assuming 'path' in JSON is just the filename (e.g., 'CAT-GEAR-01_chute.jpg')
+    filename = asset_info['path']
+    blob_path = f"ule2/{filename}" 
+    
     blob = bucket.blob(blob_path)
     
     try:
