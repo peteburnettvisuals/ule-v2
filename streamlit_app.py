@@ -678,7 +678,7 @@ else:
                     st.rerun()
 
         # MAIN INTERFACE: 3 Columns
-        col1, col2, col3 = st.columns([0.2, 0.5, 0.3], gap="medium")
+        col1, col2, col3 = st.columns([0.2, 0.4, 0.4], gap="medium")
 
         # --- COLUMN 1: THE SEQUENTIAL LESSON ROADMAP ---
         with col1:
@@ -826,17 +826,42 @@ else:
         # --- COLUMN 3: HUD (ASSET RESOLVER) ---
         with col3:
             st.markdown("<div style='margin-top: 3.85rem;'></div>", unsafe_allow_html=True)
-            st.subheader("Reference Deck")
-            
-            # TELEMETRY: This will show in small text exactly what ID is "active"
-            current_id = st.session_state.get("active_visual", "None")
-            st.caption(f"DEBUG: Active ID = {current_id}")
-            
-            if current_id != "None":
-                signed_url = resolve_asset_url(current_id)
+                       
+            asset_id = st.session_state.get("active_visual")
+            if asset_id:
+                signed_url = resolve_asset_url(asset_id)
                 if signed_url:
-                    st.image(signed_url, caption=f"Resource: {current_id}", use_container_width=True)
-                    # Optional: Show the URL to see if it looks right
-                    # st.write(signed_url) 
+                    # 1. Render the image without the default caption
+                    st.image(signed_url, use_container_width=True)
+                    
+                    # 2. Render a Custom Styled Caption
+                    # This uses a subtle purple glow to match your UI theme
+                    st.markdown(f"""
+                        <div style="
+                            background-color: rgba(168, 85, 247, 0.1);
+                            border-left: 3px solid #a855f7;
+                            padding: 10px;
+                            margin-top: -10px;
+                            border-radius: 0 0 5px 5px;
+                            font-family: 'Inter', sans-serif;
+                        ">
+                            <p style="
+                                margin: 0;
+                                font-size: 0.75rem;
+                                color: #64748b;
+                                text-transform: uppercase;
+                                letter-spacing: 1px;
+                                font-weight: 600;
+                            ">Active Telemetry</p>
+                            <p style="
+                                margin: 0;
+                                font-size: 1.1rem;
+                                color: #1e293b;
+                                font-weight: 700;
+                            ">{asset_id}</p>
+                        </div>
+                    """, unsafe_allow_html=True)
                 else:
-                    st.error("GCS could not resolve this ID.")
+                    st.error(f"Failed to resolve {asset_id}")
+            else:
+                st.info("Awaiting visual guidance...")
