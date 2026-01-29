@@ -307,9 +307,19 @@ def load_audit_progress():
 
 # New Asset Resolver helper
 def resolve_asset_url(asset_id):
-    """Generates a secure, temporary Signed URL from the ule2/ subfolder."""
-    asset_info = manifest['resource_library'].get(asset_id)
+    """Generates a secure, temporary Signed URL with deep debugging."""
+    if not asset_id:
+        return None
+    
+    # 1. Clean the ID (The AI sometimes leaves a bracket or space)
+    clean_id = asset_id.replace("[", "").replace("]", "").replace("AssetID:", "").strip()
+    
+    # 2. Lookup in Manifest
+    asset_info = manifest['resource_library'].get(clean_id)
+    
     if not asset_info:
+        # This tells us if the AI is hallucinating IDs not in your JSON
+        st.sidebar.error(f"Manifest Lookup Failed for: '{clean_id}'")
         return None
     
     filename = asset_info['path']
@@ -317,16 +327,16 @@ def resolve_asset_url(asset_id):
     blob = bucket.blob(blob_path)
     
     try:
-        # Generate URL - Version v4 is recommended for Vertex/Cloud integrations
+        # Attempt to sign the URL
         url = blob.generate_signed_url(
             version="v4",
-            expiration=datetime.timedelta(minutes=120),
+            expiration=datetime.timedelta(minutes=15),
             method="GET"
         )
         return url
     except Exception as e:
-        # This will now tell you if it's a permission error (403) or path error (404)
-        print(f"DEBUG: GCS Error for {asset_id}: {e}")
+        # This tells us if it's a Permissions/IAM error
+        st.sidebar.error(f"GCS Signing Error: {e}")
         return None
 
 # -- User Profile Handshake Initialisation ------------
@@ -402,37 +412,30 @@ def switch_lesson(new_lesson_id):
 def process_ai_response(response_text):
     current_lesson = st.session_state.active_lesson
     
-    # 1. Update the LIVE buffer
+    # Update the LIVE buffer
     st.session_state.chat_history.append({"role": "model", "content": response_text})
     
-    # 2. SYNC to the Ledger for persistence
+    # SYNC to the Ledger
     st.session_state.lesson_chats[current_lesson] = st.session_state.chat_history
     
-    # 3. BETTER ASSET DETECTION
-    # This regex catches [IMG-XXXX], [AssetID: IMG-XXXX], or [AssetID:IMG-XXXX]
-    # It focuses on the "IMG-" prefix which is your naming convention
-    found_assets = re.findall(r"\[(?:AssetID:\s*)?(IMG-.*?)\]", response_text)
+    # REGEX: Catch [IMG-XXXX] or [AssetID: IMG-XXXX]
+    # We use re.IGNORECASE to be safe
+    found_assets = re.findall(r"\[(?:AssetID:\s*)?(IMG-.*?)\]", response_text, re.IGNORECASE)
     
     if found_assets:
-        # Initialize the list for this lesson if it doesn't exist
+        # Take the most recent one mentioned
+        latest_id = found_assets[-1].strip()
+        st.session_state.active_visual = latest_id
+        
+        # Add to the lesson's history deck
         if current_lesson not in st.session_state.lesson_assets:
             st.session_state.lesson_assets[current_lesson] = []
-            
-        # Add new assets to the historical deck for this lesson
-        st.session_state.lesson_assets[current_lesson].extend(found_assets)
-        
-        # UPDATE THE HUD: Set the most recent asset as the active visual
-        st.session_state.active_visual = found_assets[-1]
-    
-    # 4. CHECK FOR MASTERY
+        st.session_state.lesson_assets[current_lesson].append(latest_id)
+
+    # CHECK FOR MASTERY
     if "[VALIDATE: ALL]" in response_text:
-        # Update Firestore lesson status to 'Passed'
         update_lesson_mastery(current_lesson, status="Passed")
-        
-        # Update local status for the sidebar roadmap immediately
         st.session_state.archived_status[current_lesson] = True
-        
-        # Trigger UI Celebration
         st.balloons()
         st.success(f"Lesson {current_lesson} Complete!")
 
