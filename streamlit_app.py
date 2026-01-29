@@ -756,64 +756,68 @@ else:
                     
 
         
-        # --- COLUMN 2: THE SEMANTIC MENTOR (REFACTORED FOR CACHE) ---
+        # --- COLUMN 2: THE SEMANTIC MENTOR (DEBUG MODE) ---
         with col2:
-            # We now find lesson metadata from the JSON Manifest instead of raw XML parsing
             current_module = next((m for m in manifest['modules'] if m['id'] == st.session_state.get("active_mod")), manifest['modules'][0])
             current_lesson = next((l for l in current_module['lessons'] if l['id'] == st.session_state.active_lesson), current_module['lessons'][0])
             
             lesson_name = current_lesson['title']
 
             if "model" in st.session_state:
-                # 1. THE HANDSHAKE (Now using the Cache)
+                # 1. THE HANDSHAKE
                 if st.session_state.get("needs_handshake", False):
-                    # We don't send the XML text anymore; we just set the context ID
                     handshake_prompt = f"INITIATE_LESSON: {st.session_state.active_lesson}. Greet the student and begin."
                     response_text = get_instructor_response(handshake_prompt)
                     
-                    # Resolve initial visuals from the [AssetID] tags
-                    asset_match = re.search(r"\[(IMG-.*?)\]", response_text)
+                    # WIDE-NET CATCHER: Looks for anything starting with IMG- inside brackets
+                    asset_match = re.search(r"\[(?:AssetID:\s*)?(IMG-[^\]\s]+)\]", response_text, re.IGNORECASE)
                     if asset_match:
-                        st.session_state.active_visual = asset_match.group(1)
+                        st.session_state.active_visual = asset_match.group(1).strip().upper()
                     
-                    # Clean response for UI (removes brackets)
-                    ui_text = re.sub(r"\[.*?\]", "", response_text).strip()
-                    st.session_state.chat_history = [{"role": "model", "content": ui_text}]
+                    # NOTE: We are NOT cleaning response_text here anymore to see raw output
+                    st.session_state.chat_history = [{"role": "model", "content": response_text}]
                     st.session_state.needs_handshake = False
+                    st.session_state.lesson_chats[st.session_state.active_lesson] = st.session_state.chat_history
+                    save_audit_progress()
                     st.rerun()
             else:
                 st.info("🔄 Syncing with SkyHigh AI Instructor...")
                 st.session_state.model = initialize_engine()
                 st.rerun()
 
-            # 2. CHAT DISPLAY
+            # 2. CHAT DISPLAY (Now showing RAW strings)
             st.subheader(f"🎯 LESSON: {lesson_name}")
             chat_container = st.container(height=500)
             for msg in st.session_state.chat_history:
                 with chat_container.chat_message("assistant" if msg["role"] == "model" else "user"):
+                    # RAW OUTPUT: This will show [IMG-XXXX] tags in the chat if the AI is sending them
                     st.write(msg["content"])
 
-            # 3. USER INPUT PROCESSING (Updated regex and sync)
+            # 3. USER INPUT PROCESSING
             if user_input := st.chat_input("Ask a question...", key=f"chat_{st.session_state.active_lesson}"):
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
                 raw_response = get_instructor_response(user_input)
 
-                # Detect surfaced assets: Look for [AssetID: IMG-XXXX] or just [IMG-XXXX]
-                asset_match = re.search(r"\[(?:AssetID:\s*)?(IMG-.*?)\]", raw_response)
+                # WIDE-NET ASSET DETECTION
+                asset_match = re.search(r"\[(?:AssetID:\s*)?(IMG-[^\]\s]+)\]", raw_response, re.IGNORECASE)
                 if asset_match:
-                    st.session_state.active_visual = asset_match.group(1).strip()
+                    # Clean and push to HUD
+                    latest_id = asset_match.group(1).strip().upper()
+                    st.session_state.active_visual = latest_id
+                    
+                    # Pin to lesson history
+                    if st.session_state.active_lesson not in st.session_state.lesson_assets:
+                        st.session_state.lesson_assets[st.session_state.active_lesson] = []
+                    st.session_state.lesson_assets[st.session_state.active_lesson].append(latest_id)
 
                 # Logic Gates: Check for completion
                 if "[VALIDATE: ALL]" in raw_response:
                     st.session_state.archived_status[st.session_state.active_lesson] = True
                     st.balloons()
                 
-                # Clean and Save
-                ui_response = re.sub(r"\[.*?\]", "", raw_response).strip()
-                st.session_state.chat_history.append({"role": "model", "content": ui_response})
-                
-                # CRITICAL: Sync live buffer to the ledger
+                # SAVE RAW: No cleaning so we can debug tags
+                st.session_state.chat_history.append({"role": "model", "content": raw_response})
                 st.session_state.lesson_chats[st.session_state.active_lesson] = st.session_state.chat_history
                 
                 save_audit_progress()
@@ -824,19 +828,15 @@ else:
             st.markdown("<div style='margin-top: 3.85rem;'></div>", unsafe_allow_html=True)
             st.subheader("Reference Deck")
             
-            raw_asset_id = st.session_state.get("active_visual")
+            # TELEMETRY: This will show in small text exactly what ID is "active"
+            current_id = st.session_state.get("active_visual", "None")
+            st.caption(f"DEBUG: Active ID = {current_id}")
             
-            if raw_asset_id:
-                # CLEANER: Remove any accidental brackets or "AssetID:" prefixes 
-                # just in case they slipped through the regex
-                clean_id = raw_asset_id.replace("[", "").replace("]", "").replace("AssetID:", "").strip()
-                
-                signed_url = resolve_asset_url(clean_id)
-                
+            if current_id != "None":
+                signed_url = resolve_asset_url(current_id)
                 if signed_url:
-                    st.image(signed_url, caption=f"Resource: {clean_id}", use_container_width=True)
+                    st.image(signed_url, caption=f"Resource: {current_id}", use_container_width=True)
+                    # Optional: Show the URL to see if it looks right
+                    # st.write(signed_url) 
                 else:
-                    # DEBUG: This helps you see exactly what the code is looking for in the JSON
-                    st.error(f"Lookup Failed: Key '{clean_id}' not found in manifest.")
-            else:
-                st.info("Awaiting visual guidance from the instructor...")
+                    st.error("GCS could not resolve this ID.")
