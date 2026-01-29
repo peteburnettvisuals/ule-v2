@@ -111,13 +111,13 @@
     }
   ],
   "resource_library": {
-    "IMG-CHUTE1": { "type": "image", "path": "gs://bucket/CAT-GEAR-01_chute_overview.jpg", "label": "Chute Overview" },
-    "IMG-CHUTE-HANDLES1": { "type": "image", "path": "gs://bucket/CAT-GEAR-01_chute_handles.jpg", "label": "Emergency Handles" },
-    "IMG-ALTIMETER1": { "type": "image", "path": "gs://bucket/CAT-GEAR-02_altimeter_example.jpg", "label": "Analog Altimeter" },
-    "IMG-DECWINDOW1": { "type": "image", "path": "gs://bucket/CAT-GEAR-02_decision_window.jpg", "label": "The 2,500ft Window" },
-    "IMG-CUNIM1": { "type": "image", "path": "gs://bucket/CAT-ENV-01_cunim.jpg", "label": "Cumulonimbus Danger" },
-    "IMG-CLOUD1": { "type": "image", "path": "gs://bucket/CAT-ENV-01_cloud_cover.jpg", "label": "Cloud Clearance Rules" },
-    "IMG-WATERDANGER1": { "type": "image", "path": "gs://bucket/CAT-ENV-02_water_dangers.jpg", "label": "Water Hazard Zones" },
-    "IMG-WATERLAND1": { "type": "image", "path": "gs://bucket/CAT-ENV-02_water_land_SOP.jpg", "label": "Water Landing Protocol" }
+    "IMG-CHUTE1": { "type": "image", "path": "CAT-GEAR-01_chute_overview.jpg", "label": "Chute Overview" },
+    "IMG-CHUTE-HANDLES1": { "type": "image", "path": "CAT-GEAR-01_chute_handles.jpg", "label": "Emergency Handles" },
+    "IMG-ALTIMETER1": { "type": "image", "path": "CAT-GEAR-02_altimeter_example.jpg", "label": "Analog Altimeter" },
+    "IMG-DECWINDOW1": { "type": "image", "path": "CAT-GEAR-02_decision_window.jpg", "label": "The 2,500ft Window" },
+    "IMG-CUNIM1": { "type": "image", "path": "CAT-ENV-01_cunim.jpg", "label": "Cumulonimbus Danger" },
+    "IMG-CLOUD1": { "type": "image", "path": "CAT-ENV-01_cloud_cover.jpg", "label": "Cloud Clearance Rules" },
+    "IMG-WATERDANGER1": { "type": "image", "path": "CAT-ENV-02_water_dangers.jpg", "label": "Water Hazard Zones" },
+    "IMG-WATERLAND1": { "type": "image", "path": "CAT-ENV-02_water_land_SOP.jpg", "label": "Water Landing Protocol" }
   }
 }
