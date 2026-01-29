@@ -282,13 +282,10 @@ def load_audit_progress():
         
         for doc in lessons_ref:
             l_data = doc.to_dict()
-            l_id = doc.id # e.g., 'GEAR-01'
-            
-            # Rebuild the 'Passed' flags for the sidebar roadmap
+            l_id = doc.id 
             st.session_state.archived_status[l_id] = (l_data.get("status") == "Passed")
-            
-            # Rebuild the chat history for 'scrolling-free' review
-            st.session_state.all_histories[l_id] = l_data.get("chat_history", [])
+            # SYNC THIS:
+            st.session_state.lesson_chats[l_id] = l_data.get("chat_history", [])
 
         # 3. SET ACTIVE CONTEXT
         # Fallback to GEAR-01 if they've never started
