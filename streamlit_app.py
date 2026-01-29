@@ -35,16 +35,31 @@ CACHE_NAME = "skyhigh-syllabus-cache"
 
 # --- CONSOLIDATED DB & FILE STORE INITIALIZATION ---
 if not firebase_admin._apps:
-    cred_info = st.secrets["gcp_service_account_firestore"]
-    cred = credentials.Certificate(cred_info)
-    
-    firebase_admin.initialize_app(cred, {
-        'projectId': cred_info["project_id"],
-        'storageBucket': "uge-repository-cu32" # Define your GCS bucket here
-    })
+    try:
+        # 1. Pull the secret
+        cred_info = st.secrets["gcp_service_account_firestore"]
+        
+        # 2. CONVERSION: Convert the Streamlit AttrDict to a standard Python dict
+        # This is the step that usually clears that ValueError!
+        cred_dict = dict(cred_info)
+        
+        # 3. CLEANING: Ensure the private key handles line breaks correctly
+        # TOML often adds an extra escape character to the \n sequences
+        if "private_key" in cred_dict:
+            cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")
+        
+        # 4. Initialize with the cleaned dictionary
+        cred = credentials.Certificate(cred_dict)
+        firebase_admin.initialize_app(cred, {
+            'projectId': cred_dict["project_id"],
+            'storageBucket': "uge-repository-cu32"
+        })
+    except Exception as e:
+        st.error(f"CRITICAL: Firebase Init Failed: {e}")
+        st.stop()
 
 db = firestore.client(database_id="uledb")
-bucket = storage.bucket() # This is a native GCS bucket object!
+bucket = storage.bucket()
 
 # ---- VERTEX LOADER ---------------
 
