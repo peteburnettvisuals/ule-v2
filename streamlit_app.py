@@ -510,14 +510,17 @@ if not st.session_state.get("authentication_status"):
             
             # 2. THE SILENT GATE: Catch the login the moment it happens
             if st.session_state.get("authentication_status"):
-                # 1. Capture the email (username) from the authenticator
-                user_email = st.session_state["username"] 
-                
-                # 2. HYDRATE: Pull Company and Full Name from the credentials we loaded from Firestore
-                # This fixes the "Company Name Not Listed" error in your sidebar
+                user_email = st.session_state["username"]
                 user_info = credentials_data['usernames'].get(user_email, {})
-                st.session_state["company"] = user_info.get("company", "Organization Not Listed")
-                st.session_state["name"] = user_info.get("name", "Auditor")
+                
+                # Hydrate the missing key that caused the crash
+                st.session_state.user_profile = {
+                    "experience": user_info.get("experience", "Novice"),
+                    "goal": user_info.get("aspiration", "Certification")
+                }
+                
+                # Update the prompt string for the AI
+                st.session_state.u_profile = f"Experience: {st.session_state.user_profile['experience']}. Goals: {st.session_state.user_profile['goal']}"
                 
 
                 # NEW: Restore previous session from DB
