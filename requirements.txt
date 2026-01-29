@@ -9,3 +9,4 @@ google-cloud-firestore
 streamlit-authenticator==0.3.2
 streamlit-echarts
 google-cloud-aiplatform>=1.57.0
+firebase-admin>=6.5.0
