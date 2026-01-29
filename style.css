@@ -151,3 +151,8 @@ header[data-testid="stHeader"] {
     border-left: 2px solid #a855f7;
     margin-top: 5px !important;
 }
+
+/* Hides the auto-generated anchor links next to headers */
+.stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a, .stMarkdown h4 a {
+    display: none !important;
+}
