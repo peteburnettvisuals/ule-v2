@@ -298,24 +298,26 @@ def load_audit_progress():
 
 # New Asset Resolver helper
 def resolve_asset_url(asset_id):
-    """Generates a secure, temporary Signed URL valid for 2 hours."""
+    """Generates a secure, temporary Signed URL from the ule2/ subfolder."""
     asset_info = manifest['resource_library'].get(asset_id)
     if not asset_info:
         return None
     
-    # Stitch the folder and filename
     filename = asset_info['path']
     blob_path = f"ule2/{filename}" 
-    
     blob = bucket.blob(blob_path)
     
     try:
-        # 120 minutes is plenty for a tech demo review
-        url = blob.generate_signed_url(expiration=datetime.timedelta(minutes=120))
+        # Generate URL - Version v4 is recommended for Vertex/Cloud integrations
+        url = blob.generate_signed_url(
+            version="v4",
+            expiration=datetime.timedelta(minutes=120),
+            method="GET"
+        )
         return url
     except Exception as e:
-        # If this fails, it's usually the IAM role 'Service Account Token Creator'
-        st.error(f"GCS Signing Error: {e}")
+        # This will now tell you if it's a permission error (403) or path error (404)
+        print(f"DEBUG: GCS Error for {asset_id}: {e}")
         return None
 
 # -- User Profile Handshake Initialisation ------------
