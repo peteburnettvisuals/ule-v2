@@ -34,6 +34,10 @@
             <Description>A diagram of the correct water landing approach, including airborne chest strap release and leg strap release on water contact.</Description>
             <Context>Visual aid for the water landinmg procedure.</Context>
         </Asset>
+		<Asset id="VID-ARCH1" type="video">
+            <Description>A short video clip demonstrating a skydiver adopting the stable arch position in freefall.</Description>
+            <Context>Visual aid for teaching the stable arch position.</Context>
+        </Asset>
     </ResourceLibrary>
 	
 	
@@ -99,6 +103,9 @@
 		<Lesson id="SOP-02" title="Aircraft Exit Procedure">
             <Theory>A clean exit sets up a stable freefall, and prevents "Tumble" malfunctions</Theory>
             <Action>Maintain the 'Banana' stable arch in freefall: hips pushed forward, head back, arms symmetrical</Action>
+			<PrimaryResources>
+				VID-ARCH1
+			</PrimaryResources>	
         </Lesson>
 		
 		<Lesson id="SOP-03" title="Decision Window &amp; Deployment">

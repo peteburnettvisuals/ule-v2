@@ -283,24 +283,26 @@ def load_audit_progress():
             st.session_state["user_name"] = u_data.get("full_name", "Student")
 
         # 2. HYDRATE LESSONS (From 'lessons' subcollection)
-        # We stream all documents in the subcollection to reconstruct the state
         lessons_ref = db.collection("users").document(user_email).collection("lessons").stream()
         
-        # Reset local state before hydration
+        # Reset local state
         st.session_state.archived_status = {}
-        st.session_state.all_histories = {}
+        st.session_state.lesson_chats = {} # Ensure this matches your usage elsewhere
         
         for doc in lessons_ref:
             l_data = doc.to_dict()
             l_id = doc.id 
             st.session_state.archived_status[l_id] = (l_data.get("status") == "Passed")
-            # SYNC THIS:
             st.session_state.lesson_chats[l_id] = l_data.get("chat_history", [])
+            
+            # Catch the last surfaced visual to restore the HUD
+            if l_id == st.session_state.get("active_lesson"):
+                st.session_state.active_visual = l_data.get("assets_surfaced", "")
 
         # 3. SET ACTIVE CONTEXT
-        # Fallback to GEAR-01 if they've never started
-        st.session_state.active_lesson = st.session_state.get("active_lesson", "GEAR-01")
-        st.session_state.chat_history = st.session_state.all_histories.get(st.session_state.active_lesson, [])
+        # Pull the history for the active lesson into the live buffer
+        active_id = st.session_state.get("active_lesson", "GEAR-01")
+        st.session_state.chat_history = st.session_state.lesson_chats.get(active_id, [])
         
         return True
     return False
@@ -501,7 +503,33 @@ def render_mastery_report():
         st.session_state.interface_mode = "GRADUATE"
 
 
+def render_reference_deck():
+    asset_id = st.session_state.get("active_visual")
+    
+    # 1. Placeholder if nothing is deployed yet
+    if not asset_id:
+        st.info("🛰️ Training assets will appear here when deployed by the AI Instructor.")
+        return
 
+    # 2. Resolve Path from Manifest
+    asset_info = manifest['resource_library'].get(asset_id)
+    if not asset_info:
+        st.error(f"Asset {asset_id} not found.")
+        return
+
+    signed_url = resolve_asset_url(asset_id)
+    file_ext = asset_info['path'].split('.')[-1].lower()
+
+    # 3. Dynamic Rendering (The 2:4:4 HUD)
+    if file_ext in ['mp4', 'mov']:
+        # Streamlit handles the H.264 stream via HTML5
+        st.video(signed_url)
+    else:
+        # Standard square image
+        st.image(signed_url, use_container_width=True)
+    
+    # Large scale label (No header, just clean text)
+    st.markdown(f"**DATA REF:** {asset_id}")
 
 # --- 5. UI LAYOUT (3-COLUMN SKETCH) ---
 st.set_page_config(layout="wide", page_title="ULE2 Demo System")
@@ -536,6 +564,12 @@ if not st.session_state.get("authentication_status"):
                 st.session_state["u_profile"] = f"Experience: {user_info.get('experience', 'Novice')}. Goals: {user_info.get('aspiration', 'A-License')}"
                 st.session_state["user_profile"] = user_info # Safety backup
 
+                # NEW: Clear old user data before hydrating new user
+                keys_to_reset = ['chat_history', 'lesson_chats', 'archived_status', 'active_visual']
+                for key in keys_to_reset:
+                    if key in st.session_state:
+                        del st.session_state[key]
+
                 # B. TRIGGER ENGINE: Now that we have the profile, fire up Vertex
                 if "model" not in st.session_state:
                     with st.spinner("Warming up Flight Instructor Engine..."):
@@ -544,6 +578,13 @@ if not st.session_state.get("authentication_status"):
                 # C. RESTORE: Load previous lesson data
                 with st.spinner("Syncing Training Ledger..."):
                     load_audit_progress()
+
+                # If we found history for the active lesson, we DON'T need a handshake
+                if st.session_state.chat_history:
+                    st.session_state.needs_handshake = False
+                else:
+                    st.session_state.needs_handshake = True
+
                 time.sleep(1)
                 st.rerun()
                 
@@ -825,17 +866,31 @@ else:
 
         # --- COLUMN 3: HUD (ASSET RESOLVER) ---
         with col3:
-            st.markdown("<div style='margin-top: 3.85rem;'></div>", unsafe_allow_html=True)
-                       
+            # Shift down to align with the chat subheader in Col 2
+            st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
+                        
             asset_id = st.session_state.get("active_visual")
+            
             if asset_id:
-                signed_url = resolve_asset_url(asset_id)
+                # 1. Clean the ID and grab info from manifest
+                clean_id = asset_id.replace("[", "").replace("]", "").replace("AssetID:", "").strip()
+                asset_info = manifest['resource_library'].get(clean_id, {})
+                
+                signed_url = resolve_asset_url(clean_id)
+                
                 if signed_url:
-                    # 1. Render the image without the default caption
-                    st.image(signed_url, use_container_width=True)
+                    # 2. THE ATOMIC SWITCHER: Check if it's a video based on path
+                    file_path = asset_info.get('path', '').lower()
                     
-                    # 2. Render a Custom Styled Caption
-                    # This uses a subtle purple glow to match your UI theme
+                    if file_path.endswith(('.mp4', '.mov')):
+                        # We explicitly let the user control the experience
+                        st.video(signed_url, format="video/mp4", start_time=0)
+                        st.caption("📽️ Motion Demo: Use controls to seek or replay.")
+                    else:
+                        # Renders 1:1 Static Image
+                        st.image(signed_url, use_container_width=True)
+                    
+                    # 3. RENDER THE STYLED HUD CAPTION
                     st.markdown(f"""
                         <div style="
                             background-color: rgba(168, 85, 247, 0.1);
@@ -848,20 +903,21 @@ else:
                             <p style="
                                 margin: 0;
                                 font-size: 0.75rem;
-                                color: #64748b;
+                                color: #ffffff;
                                 text-transform: uppercase;
                                 letter-spacing: 1px;
                                 font-weight: 600;
-                            ">Active Telemetry</p>
+                            ">Learning Resource</p>
                             <p style="
                                 margin: 0;
                                 font-size: 1.1rem;
-                                color: #1e293b;
+                                color: #aaaaaa;
                                 font-weight: 700;
-                            ">{asset_id}</p>
+                            ">{clean_id}</p>
                         </div>
                     """, unsafe_allow_html=True)
                 else:
                     st.error(f"Failed to resolve {asset_id}")
             else:
-                st.info("Awaiting visual guidance...")
+                # The Placeholder you mentioned
+                st.info("🛰️ Awaiting instructor resources. Training assets will appear here when deployed.")

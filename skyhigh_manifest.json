@@ -118,6 +118,7 @@
     "IMG-CUNIM1": { "type": "image", "path": "CAT-ENV-01_cunim.jpg", "label": "Cumulonimbus Danger" },
     "IMG-CLOUD1": { "type": "image", "path": "CAT-ENV-01_cloud_cover.jpg", "label": "Cloud Clearance Rules" },
     "IMG-WATERDANGER1": { "type": "image", "path": "CAT-ENV-02_water_dangers.jpg", "label": "Water Hazard Zones" },
-    "IMG-WATERLAND1": { "type": "image", "path": "CAT-ENV-02_water_land_SOP.jpg", "label": "Water Landing Protocol" }
+    "IMG-WATERLAND1": { "type": "image", "path": "CAT-ENV-02_water_land_SOP.jpg", "label": "Water Landing Protocol" },
+    "VID-ARCH1": { "type": "video", "path": "SOP-02_archdemo.mp4", "label": "Demonstration of the Stable Arch Position" }
   }
 }
