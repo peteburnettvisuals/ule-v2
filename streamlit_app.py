@@ -567,6 +567,11 @@ if not st.session_state.get("authentication_status"):
             
             # --- THIS IS THE CRITICAL SPOT ---
             if st.session_state.get("authentication_status"):
+                # If this is the first run after refresh, force a sync
+                if not st.session_state.get("hydrated", False):
+                    load_audit_progress()
+                    st.session_state["hydrated"] = True
+                    st.rerun()
                 user_email = st.session_state["username"] 
                 user_info = credentials_data['usernames'].get(user_email, {})
                 
@@ -830,7 +835,7 @@ else:
                     response_text = get_instructor_response(handshake_prompt)
                     
                     # WIDE-NET CATCHER: Looks for anything starting with IMG- inside brackets
-                    asset_match = re.search(r"\[(?:AssetID:\s*)?(IMG-[^\]\s]+)\]", response_text, re.IGNORECASE)
+                    asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?(IMG-[^\]\s]+)\]", response_text, re.IGNORECASE)
 
                     if asset_match:
                         latest_id = asset_match.group(1).strip().upper()
@@ -862,9 +867,9 @@ else:
                 raw_response = get_instructor_response(user_input)
 
                 # WIDE-NET ASSET DETECTION
-                asset_match = re.search(r"\[(?:AssetID:\s*)?(IMG-[^\]\s]+)\]", raw_response, re.IGNORECASE)
+                asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?(IMG-[^\]\s]+)\]", response_text, re.IGNORECASE)
+
                 if asset_match:
-                    # Clean and push to HUD
                     latest_id = asset_match.group(1).strip().upper()
                     st.session_state.active_visual = latest_id
                     
