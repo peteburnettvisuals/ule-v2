@@ -212,7 +212,7 @@ def get_instructor_response(user_input):
         ]
         st.session_state.chat_session = model.start_chat(history=handshake)
 
-    context_prefix = f"[FOCUS LESSON: {st.session_state.active_lesson}] "
+    context_prefix = f"[FOCUS LESSON: {st.session_state.active_lesson}] [STRICT MODE: You must finish this lesson with [VALIDATE: ALL] before mentioning anything else.] "
     response = st.session_state.chat_session.send_message(context_prefix + user_input)
     return response.text
 
@@ -285,25 +285,36 @@ def load_audit_progress():
         # 2. HYDRATE LESSONS (From 'lessons' subcollection)
         lessons_ref = db.collection("users").document(user_email).collection("lessons").stream()
         
-        # Reset local state
+        # Reset local state containers
         st.session_state.archived_status = {}
-        st.session_state.lesson_chats = {} # Ensure this matches your usage elsewhere
+        st.session_state.lesson_chats = {} 
         
+        # 1. Populate the ledger from Firestore
         for doc in lessons_ref:
             l_data = doc.to_dict()
             l_id = doc.id 
             st.session_state.archived_status[l_id] = (l_data.get("status") == "Passed")
             st.session_state.lesson_chats[l_id] = l_data.get("chat_history", [])
-            
-            # Catch the last surfaced visual to restore the HUD
-            if l_id == st.session_state.get("active_lesson"):
-                st.session_state.active_visual = l_data.get("assets_surfaced", "")
 
-        # 3. SET ACTIVE CONTEXT
-        # Pull the history for the active lesson into the live buffer
-        active_id = st.session_state.get("active_lesson", "GEAR-01")
-        st.session_state.chat_history = st.session_state.lesson_chats.get(active_id, [])
+        # 2. THE FIX: Smart Resume
+        # Find the first lesson in the manifest that is NOT passed
+        all_manifest_lessons = [l['id'] for mod in manifest['modules'] for l in mod['lessons']]
         
+        resume_lesson = "GEAR-01" # Default fallback
+        for l_id in all_manifest_lessons:
+            if not st.session_state.archived_status.get(l_id):
+                resume_lesson = l_id
+                break # Stop at the first "False" or missing entry
+        
+        st.session_state.active_lesson = resume_lesson
+        st.session_state.chat_history = st.session_state.lesson_chats.get(resume_lesson, [])
+        
+        # Update the active module to match the resume lesson
+        for mod in manifest['modules']:
+            if resume_lesson in [l['id'] for l in mod['lessons']]:
+                st.session_state.active_mod = mod['id']
+                break
+
         return True
     return False
 
@@ -708,12 +719,22 @@ else:
             
             # 3. Module Selection
             st.subheader("Training Modules")
-            for mod in manifest['modules']:
-                # Use the icon and title from the JSON
-                if st.button(f"{mod['icon']} {mod['title']}", key=f"side_{mod['id']}", width="stretch"):
+            for i, mod in enumerate(manifest['modules']):
+                # UNLOCK LOGIC: First module is always open, 
+                # others require the PREVIOUS module to be 100% complete
+                if i == 0:
+                    mod_unlocked = True
+                else:
+                    prev_mod = manifest['modules'][i-1]
+                    mod_unlocked = all(st.session_state.archived_status.get(l['id']) for l in prev_mod['lessons'])
+                
+                label = f"{mod['icon']} {mod['title']}"
+                if not mod_unlocked:
+                    label = f"🔒 {mod['title']}"
+                    
+                if st.button(label, key=f"side_{mod['id']}", width="stretch", disabled=not mod_unlocked):
                     st.session_state.active_mod = mod['id']
-                    st.session_state.active_lesson = mod['lessons'][0]['id'] # Default to first lesson
-                    # Reset chat for the new lesson
+                    st.session_state.active_lesson = mod['lessons'][0]['id']
                     if "chat_session" in st.session_state:
                         del st.session_state.chat_session 
                     st.rerun()
@@ -773,23 +794,21 @@ else:
                     use_container_width=True, 
                     disabled=not is_unlocked
                 ):
-                    # 1. SAVE: Park the current chat in the dictionary before leaving
-                    if st.session_state.active_lesson:
-                        st.session_state.lesson_chats[st.session_state.active_lesson] = st.session_state.chat_history
-
-                    # 2. SWITCH: Update the pointers
+                    # 1. Archive the current chat before moving
+                    st.session_state.lesson_chats[st.session_state.active_lesson] = st.session_state.chat_history
+                    
+                    # 2. Update pointers
                     st.session_state.active_lesson = lesson_id
                     
-                    # 3. HYDRATE: Pull the history for the new lesson
-                    # If it doesn't exist locally, it tries the DB or stays empty
-                    st.session_state.chat_history = st.session_state.lesson_chats.get(lesson_id, [])
-                    
-                    # 4. RESET ENGINE: Force Vertex to start a fresh thread for the new lesson
-                    # This prevents 'Gear' theory from bleeding into 'Weather' theory
+                    # 3. CRITICAL: Re-initialize the engine for the NEW context
                     if "chat_session" in st.session_state:
                         del st.session_state.chat_session
+                        
+                    # 4. Hydrate history for the new lesson (or start fresh)
+                    st.session_state.chat_history = st.session_state.lesson_chats.get(lesson_id, [])
+                    st.session_state.active_visual = None # Clear the HUD for the new lesson
                     
-                    # 5. HANDSHAKE: If history is empty, trigger the personalized greeting
+                    # 5. Determine if we need a fresh handshake
                     st.session_state.needs_handshake = not bool(st.session_state.chat_history)
                     
                     st.rerun()
@@ -812,8 +831,10 @@ else:
                     
                     # WIDE-NET CATCHER: Looks for anything starting with IMG- inside brackets
                     asset_match = re.search(r"\[(?:AssetID:\s*)?(IMG-[^\]\s]+)\]", response_text, re.IGNORECASE)
+
                     if asset_match:
-                        st.session_state.active_visual = asset_match.group(1).strip().upper()
+                        latest_id = asset_match.group(1).strip().upper()
+                        st.session_state.active_visual = latest_id
                     
                     # NOTE: We are NOT cleaning response_text here anymore to see raw output
                     st.session_state.chat_history = [{"role": "model", "content": response_text}]
