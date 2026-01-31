@@ -215,7 +215,13 @@ def get_instructor_response(user_input):
 
     # Check if we are in Graduate Mode
     if check_graduation_status():
-        context_prefix = "[MISSION SUPPORT MODE: The student has GRADUATED. Be concise, technical, and supportive for live jump prep.] "
+        context_prefix = """
+        [MISSION SPECIALIST MODE] 
+        Peter is now a Graduate. Provide technical briefings. 
+        If Peter asks about gear, SOPs, or positions, you MUST output the relevant [AssetID] tag from the manifest 
+        so it appears in his briefing feed. 
+        Example: 'Here is the arch demo: [VID-ARCH1]'
+        """
     else:
         context_prefix = f"[FOCUS LESSON: {st.session_state.active_lesson}] [STRICT MODE: You must finish this lesson with [VALIDATE: ALL] before mentioning anything else.] "
     response = st.session_state.chat_session.send_message(context_prefix + user_input)
@@ -467,37 +473,31 @@ def check_graduation_status():
     return progress >= 1.0  # Returns True if 100% complete
 
 def generate_pan_syllabus_report():
-    """Aggregates all lesson data for a final, holistic vertical assessment."""
-    
-    # 1. Gather all recorded histories into a single summary block
+    """Aggregates full dialogue for a holistic performance audit."""
     all_interactions = ""
     for lesson_id, history in st.session_state.lesson_chats.items():
-        # Just grab the text content to keep the prompt efficient
-        summary = " ".join([msg['content'] for msg in history if msg['role'] == 'model'])
-        all_interactions += f"\n--- Lesson {lesson_id} ---\n{summary[:500]}..." # Snippets for context
+        # Capture BOTH student and instructor for the full picture
+        transcript = ""
+        for msg in history:
+            role_label = "STUDENT" if msg['role'] == 'user' else "INSTRUCTOR"
+            transcript += f"{role_label}: {msg['content']}\n"
+        
+        all_interactions += f"\n--- Lesson {lesson_id} Transcript ---\n{transcript}\n"
 
-    # 2. Final Assessment Prompt
     report_prompt = f"""
     ROLE: Senior Flight Examiner.
-    CONTEXT: This is a Tech Demo of the SkyHigh LMS. The student has completed a 'Lean Syllabus' 
-    consisting of two critical modules: Equipment and Standard Procedures.
+    DATA: The following is the FULL dialogue between the student (Peter) and the AI Instructor.
     
-    TASK: Provide a Student Mastery Report focused EXCLUSIVELY on their performance in these specific areas.
+    TASK: Provide a Student Mastery Report.
+    1. UNDERSTANDING CHECK: Based on Peter's specific answers, did he demonstrate a deep grasp of the gear and SOPs?
+    2. SCENARIO PERFORMANCE: How did he handle the final application scenarios? (e.g., the 'Banana' arch or altitude checks).
+    3. COGNITIVE LOAD: Did Peter seem confident, or did he require multiple corrections?
+    4. VERDICT: Is he technically competent based on his actual responses?
     
-    1. DEMO COMPLETION SUMMARY: Acknowledge that they have mastered the current 'Tech Demo' payload.
-    2. TECHNICAL COMPETENCY: Based on the chat history, how well did they grasp:
-       - GEAR (Dual Canopy & Altimeter calibration)?
-       - SOPs (Stable Arch/Banana Position & Exit Stability)?
-    3. COGNITIVE LOAD: Did they answer questions accurately and handle the final scenarios with confidence?
-    4. EXAMINER'S VERDICT: Provide a 'Ready for Next Phase' statement tailored to this student's specific learning speed.
-    
-    IMPORTANT: Frame this as a successful completion of the INITIAL training phase.
-    
-    COURSE HISTORY SNIPPET:
+    COURSE DATA:
     {all_interactions}
     """
     
-    # Execute the final vertical audit
     report = st.session_state.model.generate_content(report_prompt)
     return report.text
     
@@ -705,28 +705,32 @@ else:
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col_asst:
-            st.subheader("🛰️ Live Jump Assistant (Graduate Mode)")
-            st.markdown("""
-                *You are now clear for live jumps. Use this terminal for pre-flight checks, 
-                emergency procedure recaps, or technical queries regarding your specific canopy setup.*
-            """)
+            st.header("🛰️ Graduate Assistant")
+            st.markdown("*You now haver access to the whole syllabus. Ask your questions here.*")
             
-            # Graduate Chat Logic (Simplified for mission support)
-            grad_chat_container = st.container(height=500)
+            grad_chat_container = st.container(height=550)
             if "grad_history" not in st.session_state:
                 st.session_state.grad_history = []
                 
+            # Render Graduate Chat with INLINE ASSETS
             for msg in st.session_state.grad_history:
                 with grad_chat_container.chat_message(msg["role"]):
                     st.write(msg["content"])
                     
-            if grad_input := st.chat_input("Request mission support..."):
+                    # ASSET DETECTION: If the AI mentions a tag, render it immediately below the text
+                    asset_match = re.search(r"\[(?:Asset\s*(?:ID)?:\s*)?((?:IMG|VID)-[^\]\s]+)\]", msg["content"], re.IGNORECASE)
+                    if asset_match:
+                        asset_id = asset_match.group(1).strip().upper()
+                        url = resolve_asset_url(asset_id)
+                        if url:
+                            if "VID-" in asset_id:
+                                st.video(url)
+                            else:
+                                st.image(url, use_container_width=True)
+            
+            if grad_input := st.chat_input("Ask for a briefing (e.g., 'Show me the arch')..."):
                 st.session_state.grad_history.append({"role": "user", "content": grad_input})
-                with st.spinner("Consulting SkyHigh Knowledge Base..."):
-                    # Use a specialized prompt for graduates
-                    grad_prompt = f"GRADUATE MISSION SUPPORT: {grad_input}"
-                    response = get_instructor_response(grad_prompt)
-                    st.session_state.grad_history.append({"role": "assistant", "content": response})
+                # Your existing get_instructor_response logic here...
                 st.rerun()
     else:
         # 1. AUTO-HYDRATION GATE
