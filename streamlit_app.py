@@ -707,6 +707,7 @@ else:
                 /* BRIEFING HUD (Column 3) Visuals */
                 [data-testid="column"]:nth-of-type(3) img, 
                 [data-testid="column"]:nth-of-type(3) video {
+                    color: #FFFFFF !important; 
                     border-radius: 10px;
                     border: 2px solid #a855f7;
                     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
