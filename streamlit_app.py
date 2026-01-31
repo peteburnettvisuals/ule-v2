@@ -691,31 +691,46 @@ else:
         col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="medium")
         
         with col_cert:
-            # 1. HARDENED GRADUATE CSS (Inline)
+            # 1. THE SIDEBAR STYLING
             st.markdown("""
                 <style>
-                    .cert-box {
-                        background-color: rgba(255, 255, 255, 0.05);
-                        border-left: 5px solid #a855f7;
-                        border-radius: 12px;
-                        padding: 25px;
-                        margin-bottom: 25px;
+                    /* Target the column container specifically */
+                    [data-testid="column"]:nth-of-type(1) {
+                        background-color: #F1F5F9; /* Light Slate Gray */
+                        border-radius: 15px;
+                        padding: 20px;
+                        min-height: 80vh;
                     }
-                    .cert-box h1, .cert-box h2, .cert-box h3, .cert-box p, .cert-box li, .cert-box span {
-                        color: #ffffff !important;
+                    
+                    /* Force dark text for this specific column */
+                    .cert-sidebar h1, .cert-sidebar h2, .cert-sidebar h3, 
+                    .cert-sidebar p, .cert-sidebar li, .cert-sidebar div {
+                        color: #1E293B !important;
+                    }
+
+                    /* The boxes inside the light column */
+                    .cert-box-light {
+                        background-color: #FFFFFF;
+                        border-left: 5px solid #a855f7;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
                     }
                 </style>
             """, unsafe_allow_html=True)
 
+            # Wrapper div to apply our dark-text rules
+            st.markdown('<div class="cert-sidebar">', unsafe_allow_html=True)
             st.header("🏅 Pilot Certification")
 
             # --- BOX 1: PROGRESS SUMMARY ---
-            st.markdown('<div class="cert-box">', unsafe_allow_html=True)
+            st.markdown('<div class="cert-box-light">', unsafe_allow_html=True)
             st.subheader("Training Progress Summary")
-            render_mastery_report() # This now sits inside the div
+            render_mastery_report() 
             st.markdown('</div>', unsafe_allow_html=True)
 
-            # --- BOX 2: PERSISTENT EXAMINER NOTES (Replacing 'pass') ---
+            # --- BOX 2: PERSISTENT EXAMINER NOTES (FIRESTORE LOGIC) ---
             if "graduation_report" not in st.session_state:
                 user_email = st.session_state.get("username")
                 user_doc_ref = db.collection("users").document(user_email)
@@ -729,15 +744,18 @@ else:
                 else:
                     with st.spinner("📜 Archiving Final Performance Data..."):
                         new_report = generate_pan_syllabus_report()
+                        # Use .update to avoid overwriting the whole user profile
                         user_doc_ref.update({"final_mastery_report": new_report})
                         st.session_state.graduation_report = new_report
 
             # Render the report inside its own cert-box
-            st.markdown('<div class="cert-box">', unsafe_allow_html=True)
+            st.markdown('<div class="cert-box-light">', unsafe_allow_html=True)
             st.subheader("📝 Senior Examiner's Notes")
-            # Using a nested div to force white text on the AI output
-            st.markdown(f'<div style="color:white !important;">{st.session_state.graduation_report}</div>', unsafe_allow_html=True)
+            # We remove the "color:white" from earlier to let it be dark slate
+            st.markdown(st.session_state.graduation_report)
             st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True) # Close cert-sidebar
 
         with col_asst:
             st.subheader("🛰️ Mission Assistant")
