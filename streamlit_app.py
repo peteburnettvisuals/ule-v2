@@ -666,10 +666,15 @@ if not st.session_state.get("authentication_status"):
 else:
     # --- CHECK FOR GRADUATION FIRST ---
     if check_graduation_status():
-        # Apply local styling for Graduate Mode
+        # HYDRATION GATE: Ensure AI Engine is live for reports/assistant
+        if "model" not in st.session_state:
+            with st.spinner("Re-establishing link to Senior Examiner..."):
+                st.session_state.model = initialize_engine()
+
+        # Apply High-Contrast Styling for White Text
         st.markdown("""
             <style>
-                .grad-text, .grad-text p, .grad-text h1, .grad-text h2, .grad-text h3 {
+                .grad-text, .grad-text p, .grad-text h1, .grad-text h2, .grad-text h3, .grad-text div {
                     color: #ffffff !important;
                 }
                 .report-box {
@@ -677,6 +682,7 @@ else:
                     padding: 20px;
                     border-radius: 10px;
                     border: 1px solid rgba(168, 85, 247, 0.3);
+                    color: #ffffff !important;
                 }
             </style>
         """, unsafe_allow_html=True)
@@ -685,10 +691,11 @@ else:
         
         with col_cert:
             st.markdown('<div class="grad-text">', unsafe_allow_html=True)
-            render_mastery_report()
+            render_mastery_report() # Shows the 4/4 table
             
             st.divider()
             
+            # THE FIX: This will now find st.session_state.model
             if "graduation_report" not in st.session_state:
                 with st.spinner("📜 Generating Final Mastery Report..."):
                     st.session_state.graduation_report = generate_pan_syllabus_report()
