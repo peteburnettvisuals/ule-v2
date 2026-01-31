@@ -87,7 +87,9 @@ def initialize_engine():
         # Note: In production, we'd filter by a specific metadata tag or name
         target_cache = next(c for c in all_caches if "gemini-2.5-flash" in c.model_name)
         
-        st.sidebar.success(f"✅ Using Active Cache: {target_cache.name[-4:]}")
+        # ONLY show success if not graduated
+        if not check_graduation_status():
+            st.sidebar.success(f"✅ Using Active Cache: {target_cache.name[-4:]}")
         return GenerativeModel.from_cached_content(cached_content=target_cache)
 
     except (StopIteration, Exception):
@@ -689,67 +691,55 @@ else:
         col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="medium")
         
         with col_cert:
+            # Inline CSS for High-Contrast White Text
             st.markdown("""
                 <style>
-                    /* Force white text for all standard elements in Graduate Mode */
-                    .grad-text, .grad-text p, .grad-text span, .grad-text li, .grad-text div {
-                        color: #FFFFFF !important;
-                        font-family: 'Inter', sans-serif;
-                    }
-                    
-                    /* Specialized container for the Senior Examiner's Notes */
+                    .grad-text, .grad-text p, .grad-text h1, .grad-text h2, .grad-text h3 { color: #ffffff !important; }
                     .report-box { 
                         background-color: rgba(255, 255, 255, 0.05); 
-                        padding: 25px; 
+                        padding: 20px; 
                         border-radius: 12px; 
                         border-left: 5px solid #a855f7;
-                        margin-top: 15px;
+                        margin-bottom: 25px;
                     }
-                    
-                    /* Ensuring the Examiner's Notes specifically remain white */
-                    .report-box p, .report-box li {
-                        color: #FFFFFF !important;
-                        font-size: 1.05rem !important;
-                        line-height: 1.6 !important;
-                    }
-
-                    /* Bold accents in the report to match the purple brand */
-                    .report-box strong, .report-box b {
-                        color: #ffffff !important;
-                        font-weight: 700;
-                    }
+                    .report-box p, .report-box li { color: #ffffff !important; line-height: 1.6; }
+                    .report-box strong { color: #a855f7 !important; }
                 </style>
             """, unsafe_allow_html=True)
-            st.markdown('<div class="grad-text">', unsafe_allow_html=True)
-            st.markdown('<div class="report-box">', unsafe_allow_html=True)
-            st.subheader("Training Progress Summary")
-            render_mastery_report()
-            st.markdown('</div>', unsafe_allow_html=True)
-            st.divider
 
-            # --- PERSISTENT REPORT LOGIC ---
+            st.markdown('<div class="grad-text">', unsafe_allow_html=True)
+            st.header("🏅 Pilot Certification")
+            
+            # BOX 1: PROGRESS TABLE
+            with st.container(border=False):
+                st.markdown('<div class="report-box">', unsafe_allow_html=True)
+                st.subheader("Training Progress Summary")
+                render_mastery_report()
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            # BOX 2: PERSISTENT EXAMINER NOTES
             if "graduation_report" not in st.session_state:
                 user_email = st.session_state.get("username")
                 user_doc_ref = db.collection("users").document(user_email)
                 user_doc = user_doc_ref.get()
                 
-                # Check if Firestore already has the report
-                saved_report = user_doc.to_dict().get("final_mastery_report")
+                # Try to load existing report to ensure consistency
+                saved_report = user_doc.to_dict().get("final_mastery_report") if user_doc.exists else None
                 
                 if saved_report:
                     st.session_state.graduation_report = saved_report
                 else:
-                    with st.spinner("📜 Finalizing Training Record in Cloud..."):
-                        # 1. Generate new report
+                    with st.spinner("📜 Archiving Final Performance Data..."):
                         new_report = generate_pan_syllabus_report()
-                        # 2. Save to Firestore immediately
                         user_doc_ref.update({"final_mastery_report": new_report})
-                        # 3. Update session state
                         st.session_state.graduation_report = new_report
 
-            st.markdown("### 📝 Senior Examiner's Notes")
-            st.markdown(f'<div class="report-box">{st.session_state.graduation_report}</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True) 
+            st.markdown('<div class="report-box">', unsafe_allow_html=True)
+            st.subheader("📝 Senior Examiner's Notes")
+            st.markdown(st.session_state.graduation_report)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
         with col_asst:
             st.subheader("🛰️ Mission Assistant")
