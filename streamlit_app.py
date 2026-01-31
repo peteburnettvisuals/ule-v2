@@ -737,13 +737,17 @@ else:
             st.subheader("🛰️ Mission Assistant")
             grad_chat_container = st.container(height=550)
             
-            if "grad_history" not in st.session_state:
-                st.session_state.grad_history = []
+            # Initialize history with the hard-coded welcome if it's empty
+            if "grad_history" not in st.session_state or len(st.session_state.grad_history) == 0:
+                st.session_state.grad_history = [{
+                    "role": "assistant", 
+                    "content": "🚀 **Congratulations on your graduation!**\n\nI am now your on-call Jump Assistant. Feel free to ask me any questions to refresh your memory on the syllabus, or get a reminder about gear, weather, or procedures before your next jump."
+                }]
                 
+            # Render the history
             for msg in st.session_state.grad_history:
                 with grad_chat_container.chat_message(msg["role"]):
                     st.write(msg["content"])
-                    # We no longer render assets INLINE here to keep the chat clean
             
             if grad_input := st.chat_input("Request technical support..."):
                 st.session_state.grad_history.append({"role": "user", "content": grad_input})
