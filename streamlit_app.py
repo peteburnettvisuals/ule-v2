@@ -667,53 +667,51 @@ if not st.session_state.get("authentication_status"):
 
 else:
     if check_graduation_status():
-        # 1. HARDENED SIDEBAR CSS
+        # --- GRADUATE MODE: 3-COLUMN BRIEFING HUD ---
+    if check_graduation_status():
+        # 1. FINAL CONSOLIDATED CSS
         st.markdown("""
             <style>
-                /* Target Column 1 (Certification) */
+                /* COLUMN 1: Certification Sidebar (Light Theme) */
                 [data-testid="stHorizontalBlock"] > div:nth-child(1) [data-testid="stVerticalBlock"] {
                     background-color: #F1F5F9 !important;
                     border-radius: 15px;
                     padding: 30px !important;
                     min-height: 90vh;
-                    box-shadow: inset -5px 0 10px rgba(0,0,0,0.05);
                 }
-                
-                /* Force Dark Slate for Column 1 Text */
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) h1, 
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) h2, 
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) h3, 
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) p, 
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) li,
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) span {
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) * {
                     color: #1E293B !important;
                 }
 
-                /* --- MISSION ASSISTANT (Column 2) --- */
-                /* Target ONLY the chat message text for white, NOT the input box */
+                /* COLUMN 2: Mission Assistant (Dark Theme) */
                 [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] p,
                 [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] h1,
                 [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] h2,
                 [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] h3 {
                     color: #FFFFFF !important;
                 }
-
-                /* THE SHIELD: Ensure Chat Input text remains visible (Dark on White) */
+                
+                /* INPUT SHIELD: Keeps typed text dark and visible */
                 [data-testid="stChatInput"] textarea {
-                    color: #31333F !important; /* Standard Streamlit Dark */
+                    color: #31333F !important;
                     -webkit-text-fill-color: #31333F !important;
                 }
 
-                /* BRIEFING HUD (Column 3) Visuals */
-                [data-testid="column"]:nth-of-type(3) img, 
-                [data-testid="column"]:nth-of-type(3) video {
-                    color: #FFFFFF !important; 
-                    border-radius: 10px;
-                    border: 2px solid #a855f7;
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+                /* COLUMN 3: Support Resources (High Contrast Visibility) */
+                /* Force any informational text or advisory notes to White */
+                [data-testid="column"]:nth-of-type(3) p, 
+                [data-testid="column"]:nth-of-type(3) span,
+                [data-testid="column"]:nth-of-type(3) div {
+                    color: #FFFFFF !important;
                 }
                 
-                /* Headers for Col 2 & 3 stay white */
+                /* Specifically target the Streamlit Info/Warning boxes in Col 3 */
+                [data-testid="column"]:nth-of-type(3) [data-testid="stNotification"] {
+                    background-color: rgba(255, 255, 255, 0.1) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+                }
+
+                /* Universal Headers for Col 2 & 3 */
                 [data-testid="column"]:nth-of-type(2) h1, [data-testid="column"]:nth-of-type(2) h2, [data-testid="column"]:nth-of-type(2) h3,
                 [data-testid="column"]:nth-of-type(3) h1, [data-testid="column"]:nth-of-type(3) h2, [data-testid="column"]:nth-of-type(3) h3 {
                     color: #FFFFFF !important;
