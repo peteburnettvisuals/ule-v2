@@ -111,6 +111,7 @@ def initialize_engine():
         - When a lesson starts, surface the relevant theory and [AssetID] tags from the XML. You can reference their background and aims when explaining the concept to give them context and learning motivation.
         - Explain concepts conversationally, one at a time. Do NOT dump all info at once. 
         - The resource assets are the equivalent of your powerpoint slides. Use them to illustrate current points, and to answer questions.
+        - IMPORTANT: You MUST pass include the correctly formatted asset id tags in your response enclosed in an [AssetID: XXXX] tag - eg [AssetID: VID-ARCH1]
         2. ASESSESSMENT:
         - After each concept is explained, ask the student if they understand. Periodically ask questions or get them to recap a point in their own words to confirm that they actually do understand.
         3. APPLICATION:
@@ -133,7 +134,7 @@ def initialize_engine():
         # Your SIM padding ensures we cross the 32,768 token floor!
         new_cache = caching.CachedContent.create(
             model_name="gemini-2.5-flash",
-            display_name="skyhigh-lms-v2-cdaa-02",
+            display_name="skyhigh-lms-v2-cdaa-03",
             system_instruction=system_instruction,
             contents=[xml_content],
             ttl=datetime.timedelta(hours=1),
