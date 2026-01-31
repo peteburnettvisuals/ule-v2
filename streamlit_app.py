@@ -667,44 +667,46 @@ if not st.session_state.get("authentication_status"):
 
 else:
     # --- GRADUATE MODE: 3-COLUMN BRIEFING HUD ---
-    # --- GRADUATE MODE: 3-COLUMN BRIEFING HUD ---
     if check_graduation_status():
-        # 1. ENGINE WARMUP
-        if "model" not in st.session_state:
-            with st.spinner("Re-establishing link to Senior Examiner..."):
-                st.session_state.model = initialize_engine()
-
-        # 2. THE LIGHT SIDEBAR CSS
+        # 1. HARDENED SIDEBAR CSS
         st.markdown("""
             <style>
-                /* Target the first column specifically for the light background */
-                [data-testid="column"]:nth-of-type(1) {
-                    background-color: #F8FAFC !important; /* Off-white / Light Slate */
+                /* Target the first column's inner container directly */
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) [data-testid="stVerticalBlock"] {
+                    background-color: #F1F5F9 !important; /* Professional Off-White */
                     border-radius: 15px;
                     padding: 30px !important;
-                    min-height: 85vh;
-                    border-right: 1px solid #E2E8F0;
+                    min-height: 90vh;
+                    box-shadow: inset -5px 0 10px rgba(0,0,0,0.05);
                 }
                 
-                /* Force dark Slate text for ALL elements in the light column */
-                [data-testid="column"]:nth-of-type(1) h1, 
-                [data-testid="column"]:nth-of-type(1) h2, 
-                [data-testid="column"]:nth-of-type(1) h3, 
-                [data-testid="column"]:nth-of-type(1) p, 
-                [data-testid="column"]:nth-of-type(1) li,
-                [data-testid="column"]:nth-of-type(1) div {
+                /* Force Dark Slate text for EVERYTHING in Column 1 */
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) h1, 
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) h2, 
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) h3, 
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) p, 
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) li,
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) span,
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) div {
                     color: #1E293B !important;
                 }
 
-                /* Keep the other two columns in White text for the dark theme */
-                [data-testid="column"]:nth-of-type(2) h1, [data-testid="column"]:nth-of-type(2) h2, [data-testid="column"]:nth-of-type(2) h3,
-                [data-testid="column"]:nth-of-type(3) h1, [data-testid="column"]:nth-of-type(3) h2, [data-testid="column"]:nth-of-type(3) h3 {
+                /* Ensure the AI report text specifically is dark slate */
+                .report-text-dark {
+                    color: #1E293B !important;
+                    line-height: 1.6;
+                    font-size: 1.05rem;
+                }
+
+                /* Keep columns 2 and 3 White for the dark theme */
+                [data-testid="stHorizontalBlock"] > div:nth-child(2) *,
+                [data-testid="stHorizontalBlock"] > div:nth-child(3) * {
                     color: #FFFFFF !important;
                 }
             </style>
         """, unsafe_allow_html=True)
 
-        # 3. LAYOUT (0.4, 0.3, 0.3)
+        # 2. LAYOUT
         col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="large")
         
         with col_cert:
