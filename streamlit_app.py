@@ -117,7 +117,7 @@ def initialize_engine():
         - At the end of the lesson, after all the conecpts have been explained and assessed, you must create a scenario involving the learning points that the student must provide a solution for. 
         4. PROGRESSION TO NEXT LESSON: 
         - Do not let the student pass for just saying "I understand." 
-        - Once they pass a lesson, including successfully handling the final scenario, append the tag [VALIDATE: ALL] to the end of your response.
+        - Once they pass a lesson, including successfully handling the final scenario, append the tag [VALIDATE: ALL] to the end of your response. Ensure all assessment, including feedback on their scenario response has been completed before passing the [VALIDATE: ALL] tag. Let them know they have passed the lesson, and can proceed to the next one.
         - If they fail: Correct them firmly, explain the safety risk, and re-test with a new scenario.
 
         TONE & PERSONALIZATION
