@@ -859,26 +859,26 @@ else:
             if user_input := st.chat_input("Ask a question...", key=f"chat_{st.session_state.active_lesson}"):
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
+                # 1. Get the actual response
                 raw_response = get_instructor_response(user_input)
 
-                # WIDE-NET ASSET DETECTION
-                asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?((?:IMG|VID)-[^\]\s]+)\]", response_text, re.IGNORECASE)
+                # 2. THE FIX: Change 'response_text' to 'raw_response' here
+                asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?((?:IMG|VID)-[^\]\s]+)\]", raw_response, re.IGNORECASE)
 
                 if asset_match:
                     latest_id = asset_match.group(1).strip().upper()
                     st.session_state.active_visual = latest_id
                     
-                    # Pin to lesson history
                     if st.session_state.active_lesson not in st.session_state.lesson_assets:
                         st.session_state.lesson_assets[st.session_state.active_lesson] = []
                     st.session_state.lesson_assets[st.session_state.active_lesson].append(latest_id)
 
-                # Logic Gates: Check for completion
+                # 3. Check for Mastery
                 if "[VALIDATE: ALL]" in raw_response:
                     st.session_state.archived_status[st.session_state.active_lesson] = True
                     st.balloons()
                 
-                # SAVE RAW: No cleaning so we can debug tags
+                # 4. Save and Rerun
                 st.session_state.chat_history.append({"role": "model", "content": raw_response})
                 st.session_state.lesson_chats[st.session_state.active_lesson] = st.session_state.chat_history
                 
