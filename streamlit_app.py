@@ -860,19 +860,22 @@ else:
                     st.write(msg["content"])
 
             # 3. USER INPUT PROCESSING
+            # --- COLUMN 2: USER INPUT PROCESSING ---
             if user_input := st.chat_input("Ask a question...", key=f"chat_{st.session_state.active_lesson}"):
                 st.session_state.chat_history.append({"role": "user", "content": user_input})
                 
-                # 1. Get the actual response
+                # 1. Get the actual live response
                 raw_response = get_instructor_response(user_input)
 
-                # 2. THE FIX: Change 'response_text' to 'raw_response' here
+                # 2. THE STRIPPER FIX: Use 'raw_response' and the hardened regex
                 asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?((?:IMG|VID)-[^\]\s]+)\]", raw_response, re.IGNORECASE)
 
                 if asset_match:
+                    # Normalize to upper case to match manifest keys
                     latest_id = asset_match.group(1).strip().upper()
                     st.session_state.active_visual = latest_id
                     
+                    # Log to lesson history deck
                     if st.session_state.active_lesson not in st.session_state.lesson_assets:
                         st.session_state.lesson_assets[st.session_state.active_lesson] = []
                     st.session_state.lesson_assets[st.session_state.active_lesson].append(latest_id)
