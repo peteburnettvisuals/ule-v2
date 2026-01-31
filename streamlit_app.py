@@ -664,38 +664,35 @@ if not st.session_state.get("authentication_status"):
                         st.warning("All mandatory fields required for certification tracking.")
 
 else:
-    # --- CHECK FOR GRADUATION FIRST ---
+    # --- GRADUATE MODE: 3-COLUMN BRIEFING HUD ---
     if check_graduation_status():
-        # HYDRATION GATE: Ensure AI Engine is live for reports/assistant
+        # Ensure Engine is Live
         if "model" not in st.session_state:
             with st.spinner("Re-establishing link to Senior Examiner..."):
                 st.session_state.model = initialize_engine()
 
-        # Apply High-Contrast Styling for White Text
+        # Apply Global Graduate Styling
         st.markdown("""
             <style>
-                .grad-text, .grad-text p, .grad-text h1, .grad-text h2, .grad-text h3, .grad-text div {
-                    color: #ffffff !important;
-                }
-                .report-box {
-                    background-color: rgba(255, 255, 255, 0.05);
-                    padding: 20px;
-                    border-radius: 10px;
-                    border: 1px solid rgba(168, 85, 247, 0.3);
+                .grad-text, .grad-text p, .grad-text h1, .grad-text h2, .grad-text h3 { color: #ffffff !important; }
+                .report-box { 
+                    background-color: rgba(255, 255, 255, 0.05); 
+                    padding: 20px; 
+                    border-radius: 10px; 
+                    border-left: 5px solid #a855f7;
                     color: #ffffff !important;
                 }
             </style>
         """, unsafe_allow_html=True)
 
-        col_cert, col_asst = st.columns([0.4, 0.6], gap="large")
+        # The 0.4 / 0.3 / 0.3 Layout
+        col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="medium")
         
         with col_cert:
             st.markdown('<div class="grad-text">', unsafe_allow_html=True)
-            render_mastery_report() # Shows the 4/4 table
-            
+            render_mastery_report()
             st.divider()
             
-            # THE FIX: This will now find st.session_state.model
             if "graduation_report" not in st.session_state:
                 with st.spinner("📜 Generating Final Mastery Report..."):
                     st.session_state.graduation_report = generate_pan_syllabus_report()
@@ -705,44 +702,34 @@ else:
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col_asst:
-            st.header("🛰️ Mission Assistant")
-            st.markdown("*Mission Support Mode: Interactive Technical Briefing.*")
-            
+            st.subheader("🛰️ Mission Assistant")
             grad_chat_container = st.container(height=550)
             
-            # 1. Initialize Grad History if missing
             if "grad_history" not in st.session_state:
                 st.session_state.grad_history = []
                 
-            # 2. Render the Chat Feed (with Inline Asset Detection)
             for msg in st.session_state.grad_history:
                 with grad_chat_container.chat_message(msg["role"]):
-                    st.markdown(msg["content"])
-                    
-                    # INLINE STRIPPER: Check each message for [IMG-] or [VID-]
-                    asset_match = re.search(r"\[(?:Asset\s*(?:ID)?:\s*)?((?:IMG|VID)-[^\]\s]+)\]", msg["content"], re.IGNORECASE)
-                    if asset_match:
-                        asset_id = asset_match.group(1).strip().upper()
-                        url = resolve_asset_url(asset_id)
-                        if url:
-                            if "VID-" in asset_id:
-                                st.video(url)
-                            else:
-                                st.image(url, use_container_width=True)
-                            st.caption(f"📍 DATA REF: {asset_id}")
-
-            # 3. Graduate Input Processing
-            if grad_input := st.chat_input("Request briefing (e.g., 'Show me the arch')...", key="grad_input"):
-                # Append user message
+                    st.write(msg["content"])
+                    # We no longer render assets INLINE here to keep the chat clean
+            
+            if grad_input := st.chat_input("Request technical support..."):
                 st.session_state.grad_history.append({"role": "user", "content": grad_input})
                 
-                # Get response from the same engine (Persona will shift based on your context_prefix)
-                with st.spinner("Consulting Pan-Syllabus..."):
-                    raw_response = get_instructor_response(grad_input)
-                    st.session_state.grad_history.append({"role": "assistant", "content": raw_response})
+                # Check for Asset Tags in the user query or AI response to update the HUD
+                raw_response = get_instructor_response(grad_input)
                 
-                # Rerun to update the feed and show assets
+                asset_match = re.search(r"\[(?:Asset\s*(?:ID)?:\s*)?((?:IMG|VID)-[^\]\s]+)\]", raw_response, re.IGNORECASE)
+                if asset_match:
+                    st.session_state.active_visual = asset_match.group(1).strip().upper()
+                
+                st.session_state.grad_history.append({"role": "assistant", "content": raw_response})
                 st.rerun()
+
+        with col_hud:
+            st.subheader("📺 Briefing HUD")
+            # Reuse your existing HUD logic to surface assets in the dedicated column
+            render_reference_deck()
     else:
         # 1. AUTO-HYDRATION GATE
         if "hydrated" not in st.session_state:
