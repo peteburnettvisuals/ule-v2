@@ -479,16 +479,21 @@ def generate_pan_syllabus_report():
     # 2. Final Assessment Prompt
     report_prompt = f"""
     ROLE: Senior Flight Examiner.
-    STUDENT: {st.session_state.name}
-    DATA: The following is a summary of the student's entire training course history.
+    CONTEXT: This is a Tech Demo of the SkyHigh LMS. The student has completed a 'Lean Syllabus' 
+    consisting of two critical modules: Equipment and Standard Procedures.
     
-    TASK: Provide a comprehensive Student Mastery Report.
-    1. OVERALL READINESS: Is the student safely prepared for live jumps?
-    2. CORE STRENGTHS: What technical areas did they master with high confidence?
-    3. COGNITIVE LOAD ANALYSIS: Based on their responses, where did they struggle? (e.g., handles, altitude awareness, emergency procedures).
-    4. EXAMINER'S NOTES: Provide 3 'Golden Rules' specifically tailored to this student's learning patterns for their future career.
+    TASK: Provide a Student Mastery Report focused EXCLUSIVELY on their performance in these specific areas.
     
-    COURSE HISTORY:
+    1. DEMO COMPLETION SUMMARY: Acknowledge that they have mastered the current 'Tech Demo' payload.
+    2. TECHNICAL COMPETENCY: Based on the chat history, how well did they grasp:
+       - GEAR (Dual Canopy & Altimeter calibration)?
+       - SOPs (Stable Arch/Banana Position & Exit Stability)?
+    3. COGNITIVE LOAD: Did they answer questions accurately and handle the final scenarios with confidence?
+    4. EXAMINER'S VERDICT: Provide a 'Ready for Next Phase' statement tailored to this student's specific learning speed.
+    
+    IMPORTANT: Frame this as a successful completion of the INITIAL training phase.
+    
+    COURSE HISTORY SNIPPET:
     {all_interactions}
     """
     
@@ -661,10 +666,25 @@ if not st.session_state.get("authentication_status"):
 else:
     # --- CHECK FOR GRADUATION FIRST ---
     if check_graduation_status():
-        # Render the 2-Column Graduate Dashboard
+        # Apply local styling for Graduate Mode
+        st.markdown("""
+            <style>
+                .grad-text, .grad-text p, .grad-text h1, .grad-text h2, .grad-text h3 {
+                    color: #ffffff !important;
+                }
+                .report-box {
+                    background-color: rgba(255, 255, 255, 0.05);
+                    padding: 20px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(168, 85, 247, 0.3);
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
         col_cert, col_asst = st.columns([0.4, 0.6], gap="large")
         
         with col_cert:
+            st.markdown('<div class="grad-text">', unsafe_allow_html=True)
             render_mastery_report()
             
             st.divider()
@@ -674,10 +694,8 @@ else:
                     st.session_state.graduation_report = generate_pan_syllabus_report()
             
             st.markdown("### 📝 Senior Examiner's Notes")
-            st.info(st.session_state.graduation_report)
-            
-            if st.button("📥 Download Training Record", use_container_width=True):
-                st.toast("Training record generated and synced to Skydiving Logbook.")
+            st.markdown(f'<div class="report-box">{st.session_state.graduation_report}</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         with col_asst:
             st.subheader("🛰️ Live Jump Assistant (Graduate Mode)")
