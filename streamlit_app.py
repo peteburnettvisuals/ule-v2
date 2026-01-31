@@ -710,9 +710,6 @@ else:
         col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="large")
         
         with col_cert:
-            st.header("🏅 Pilot Certification")
-            
-            st.subheader("Training Progress Summary")
             render_mastery_report() # Shows the 4/4 table
             
             st.divider()
