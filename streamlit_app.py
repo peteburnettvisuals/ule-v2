@@ -667,76 +667,60 @@ if not st.session_state.get("authentication_status"):
 
 else:
     # --- GRADUATE MODE: 3-COLUMN BRIEFING HUD ---
+    # --- GRADUATE MODE: 3-COLUMN BRIEFING HUD ---
     if check_graduation_status():
-        # Ensure Engine is Live
+        # 1. ENGINE WARMUP
         if "model" not in st.session_state:
             with st.spinner("Re-establishing link to Senior Examiner..."):
                 st.session_state.model = initialize_engine()
 
-        # Apply Global Graduate Styling
+        # 2. THE LIGHT SIDEBAR CSS
         st.markdown("""
             <style>
-                .grad-text, .grad-text p, .grad-text h1, .grad-text h2, .grad-text h3 { color: #ffffff !important; }
-                .report-box { 
-                    background-color: rgba(255, 255, 255, 0.05); 
-                    padding: 20px; 
-                    border-radius: 10px; 
-                    border-left: 5px solid #a855f7;
-                    color: #ffffff !important;
+                /* Target the first column specifically for the light background */
+                [data-testid="column"]:nth-of-type(1) {
+                    background-color: #F8FAFC !important; /* Off-white / Light Slate */
+                    border-radius: 15px;
+                    padding: 30px !important;
+                    min-height: 85vh;
+                    border-right: 1px solid #E2E8F0;
+                }
+                
+                /* Force dark Slate text for ALL elements in the light column */
+                [data-testid="column"]:nth-of-type(1) h1, 
+                [data-testid="column"]:nth-of-type(1) h2, 
+                [data-testid="column"]:nth-of-type(1) h3, 
+                [data-testid="column"]:nth-of-type(1) p, 
+                [data-testid="column"]:nth-of-type(1) li,
+                [data-testid="column"]:nth-of-type(1) div {
+                    color: #1E293B !important;
+                }
+
+                /* Keep the other two columns in White text for the dark theme */
+                [data-testid="column"]:nth-of-type(2) h1, [data-testid="column"]:nth-of-type(2) h2, [data-testid="column"]:nth-of-type(2) h3,
+                [data-testid="column"]:nth-of-type(3) h1, [data-testid="column"]:nth-of-type(3) h2, [data-testid="column"]:nth-of-type(3) h3 {
+                    color: #FFFFFF !important;
                 }
             </style>
         """, unsafe_allow_html=True)
 
-        # The 0.4 / 0.3 / 0.3 Layout
-        col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="medium")
+        # 3. LAYOUT (0.4, 0.3, 0.3)
+        col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="large")
         
         with col_cert:
-            # 1. THE SIDEBAR STYLING
-            st.markdown("""
-                <style>
-                    /* Target the column container specifically */
-                    [data-testid="column"]:nth-of-type(1) {
-                        background-color: #F1F5F9; /* Light Slate Gray */
-                        border-radius: 15px;
-                        padding: 20px;
-                        min-height: 80vh;
-                    }
-                    
-                    /* Force dark text for this specific column */
-                    .cert-sidebar h1, .cert-sidebar h2, .cert-sidebar h3, 
-                    .cert-sidebar p, .cert-sidebar li, .cert-sidebar div {
-                        color: #1E293B !important;
-                    }
-
-                    /* The boxes inside the light column */
-                    .cert-box-light {
-                        background-color: #FFFFFF;
-                        border-left: 5px solid #a855f7;
-                        border-radius: 8px;
-                        padding: 20px;
-                        margin-bottom: 20px;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-                    }
-                </style>
-            """, unsafe_allow_html=True)
-
-            # Wrapper div to apply our dark-text rules
-            st.markdown('<div class="cert-sidebar">', unsafe_allow_html=True)
             st.header("🏅 Pilot Certification")
-
-            # --- BOX 1: PROGRESS SUMMARY ---
-            st.markdown('<div class="cert-box-light">', unsafe_allow_html=True)
+            
             st.subheader("Training Progress Summary")
-            render_mastery_report() 
-            st.markdown('</div>', unsafe_allow_html=True)
-
-            # --- BOX 2: PERSISTENT EXAMINER NOTES (FIRESTORE LOGIC) ---
+            render_mastery_report() # Shows the 4/4 table
+            
+            st.divider()
+            
+            # PERSISTENT REPORT LOGIC
             if "graduation_report" not in st.session_state:
                 user_email = st.session_state.get("username")
                 user_doc_ref = db.collection("users").document(user_email)
                 user_doc = user_doc_ref.get()
                 
-                # Check for existing report to ensure consistency
                 saved_report = user_doc.to_dict().get("final_mastery_report") if user_doc.exists else None
                 
                 if saved_report:
@@ -744,18 +728,11 @@ else:
                 else:
                     with st.spinner("📜 Archiving Final Performance Data..."):
                         new_report = generate_pan_syllabus_report()
-                        # Use .update to avoid overwriting the whole user profile
                         user_doc_ref.update({"final_mastery_report": new_report})
                         st.session_state.graduation_report = new_report
 
-            # Render the report inside its own cert-box
-            st.markdown('<div class="cert-box-light">', unsafe_allow_html=True)
             st.subheader("📝 Senior Examiner's Notes")
-            # We remove the "color:white" from earlier to let it be dark slate
             st.markdown(st.session_state.graduation_report)
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True) # Close cert-sidebar
 
         with col_asst:
             st.subheader("🛰️ Mission Assistant")
@@ -783,7 +760,7 @@ else:
                 st.rerun()
 
         with col_hud:
-            st.subheader("📺 Briefing HUD")
+            st.subheader("Support Resources")
             # Reuse your existing HUD logic to surface assets in the dedicated column
             render_reference_deck()
     else:
