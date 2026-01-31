@@ -691,15 +691,9 @@ else:
         col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="medium")
         
         with col_cert:
-            # 1. HARDENED GRADUATE CSS
+            # 1. HARDENED GRADUATE CSS (Inline)
             st.markdown("""
                 <style>
-                    /* Target the main container's content area */
-                    [data-testid="stVerticalBlockBorderWrapper"] {
-                        color: white !important;
-                    }
-                    
-                    /* Create the "Box" style we can apply to containers */
                     .cert-box {
                         background-color: rgba(255, 255, 255, 0.05);
                         border-left: 5px solid #a855f7;
@@ -707,14 +701,7 @@ else:
                         padding: 25px;
                         margin-bottom: 25px;
                     }
-
-                    /* Force all text within these boxes to be white */
                     .cert-box h1, .cert-box h2, .cert-box h3, .cert-box p, .cert-box li, .cert-box span {
-                        color: #ffffff !important;
-                    }
-                    
-                    /* Standard Streamlit headers can be stubborn, let's catch them too */
-                    .cert-box [data-testid="stHeader"] {
                         color: #ffffff !important;
                     }
                 </style>
@@ -723,20 +710,18 @@ else:
             st.header("🏅 Pilot Certification")
 
             # --- BOX 1: PROGRESS SUMMARY ---
-            # We wrap the content in a div with our custom class
             st.markdown('<div class="cert-box">', unsafe_allow_html=True)
             st.subheader("Training Progress Summary")
-            render_mastery_report()
+            render_mastery_report() # This now sits inside the div
             st.markdown('</div>', unsafe_allow_html=True)
 
-            # --- BOX 2: PERSISTENT EXAMINER NOTES ---
-            # (Your Firestore check logic remains here...)
+            # --- BOX 2: PERSISTENT EXAMINER NOTES (Replacing 'pass') ---
             if "graduation_report" not in st.session_state:
                 user_email = st.session_state.get("username")
                 user_doc_ref = db.collection("users").document(user_email)
                 user_doc = user_doc_ref.get()
                 
-                # Try to load existing report to ensure consistency
+                # Check for existing report to ensure consistency
                 saved_report = user_doc.to_dict().get("final_mastery_report") if user_doc.exists else None
                 
                 if saved_report:
@@ -747,9 +732,10 @@ else:
                         user_doc_ref.update({"final_mastery_report": new_report})
                         st.session_state.graduation_report = new_report
 
+            # Render the report inside its own cert-box
             st.markdown('<div class="cert-box">', unsafe_allow_html=True)
             st.subheader("📝 Senior Examiner's Notes")
-            # We use st.markdown with unsafe_allow_html to ensure it sits inside the div
+            # Using a nested div to force white text on the AI output
             st.markdown(f'<div style="color:white !important;">{st.session_state.graduation_report}</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
