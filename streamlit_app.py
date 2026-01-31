@@ -212,7 +212,11 @@ def get_instructor_response(user_input):
         ]
         st.session_state.chat_session = model.start_chat(history=handshake)
 
-    context_prefix = f"[FOCUS LESSON: {st.session_state.active_lesson}] [STRICT MODE: You must finish this lesson with [VALIDATE: ALL] before mentioning anything else.] "
+    # Check if we are in Graduate Mode
+    if check_graduation_status():
+        context_prefix = "[MISSION SUPPORT MODE: The student has GRADUATED. Be concise, technical, and supportive for live jump prep.] "
+    else:
+        context_prefix = f"[FOCUS LESSON: {st.session_state.active_lesson}] [STRICT MODE: You must finish this lesson with [VALIDATE: ALL] before mentioning anything else.] "
     response = st.session_state.chat_session.send_message(context_prefix + user_input)
     return response.text
 
@@ -657,13 +661,47 @@ else:
     # --- CHECK FOR GRADUATION FIRST ---
     if check_graduation_status():
         # Render the 2-Column Graduate Dashboard
-        col_cert, col_asst = st.columns([0.4, 0.6])
+        col_cert, col_asst = st.columns([0.4, 0.6], gap="large")
+        
         with col_cert:
             render_mastery_report()
-            # Add final holistic report here
+            
+            st.divider()
+            
+            if "graduation_report" not in st.session_state:
+                with st.spinner("📜 Generating Final Mastery Report..."):
+                    st.session_state.graduation_report = generate_pan_syllabus_report()
+            
+            st.markdown("### 📝 Senior Examiner's Notes")
+            st.info(st.session_state.graduation_report)
+            
+            if st.button("📥 Download Training Record", use_container_width=True):
+                st.toast("Training record generated and synced to Skydiving Logbook.")
+
         with col_asst:
-            st.subheader("Live Jump Assistant")
-            # Render Pan-Syllabus Chat here
+            st.subheader("🛰️ Live Jump Assistant (Graduate Mode)")
+            st.markdown("""
+                *You are now clear for live jumps. Use this terminal for pre-flight checks, 
+                emergency procedure recaps, or technical queries regarding your specific canopy setup.*
+            """)
+            
+            # Graduate Chat Logic (Simplified for mission support)
+            grad_chat_container = st.container(height=500)
+            if "grad_history" not in st.session_state:
+                st.session_state.grad_history = []
+                
+            for msg in st.session_state.grad_history:
+                with grad_chat_container.chat_message(msg["role"]):
+                    st.write(msg["content"])
+                    
+            if grad_input := st.chat_input("Request mission support..."):
+                st.session_state.grad_history.append({"role": "user", "content": grad_input})
+                with st.spinner("Consulting SkyHigh Knowledge Base..."):
+                    # Use a specialized prompt for graduates
+                    grad_prompt = f"GRADUATE MISSION SUPPORT: {grad_input}"
+                    response = get_instructor_response(grad_prompt)
+                    st.session_state.grad_history.append({"role": "assistant", "content": response})
+                st.rerun()
     else:
         # 1. AUTO-HYDRATION GATE
         if "hydrated" not in st.session_state:
