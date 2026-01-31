@@ -108,62 +108,12 @@
 			</PrimaryResources>	
         </Lesson>
 		
-		<Lesson id="SOP-03" title="Decision Window &amp; Deployment">
-            <Theory>
-				Decision Window: 5,000ft AGL is the start of the Decision Window, reaching down to 3,000 feet
-				Mandatory Deployment Altitude: 3,000ft AGL. Essential parachute is deployed to allow time to reserve deployment in case of failure.
-			</Theory>
-			<PrimaryResources>
-				IMG-DECWINDOW1
-			</PrimaryResources>	
-        </Lesson>
 		
-		<Lesson id="SOP-04" title="Steering &amp; Landing">
-            <Theory>Unlike the older circular chutes, modern ram air chutes are steerable, using toggles attached to the risers. Toggles are used inidividually for steering, and together to "flare" the chute for landing.</Theory>
-            <KeyPoints>
-				Turning: Left/Right toggles pulled down toward the waist will turn the chute.
-				Flare: Both toggles pulled simultaneously at 10ft AGL for a slower safer landing.
-			</KeyPoints>
-        </Lesson>
 		
     </Module>
 	
 	
-	<Module id="MOD-03" title="Emergency Procedures">
 	
-        <Lesson id="EOP-01" title="Line Twists">
-            <Theory>Line twists can be frightening, but can often be corrected with a simple movement.</Theory>
-            <Procedure>
-				Correction: Grab risers and "bicycle kick" legs.
-				Hard Floor: If line twists not cleared by 2,500ft, initiate Cut-Away.
-			</Procedure>
-        </Lesson>
-		
-		<Lesson id="EOP-02" title="Cut-Away Procedure">
-            <Theory>If the main chute cannot be used, due to a rip, failure to deploy or a line twist that acnnot be cleared, then it must be cut away.</Theory>
-            <Procedure>
-				Standard cutaway procedure: 
-				1. LOOK: Identify the Red Cutaway Handle.
-                2. GRAB: Firmly grip the Red Handle.
-                3. PULL: Extract fully to release main.
-                4. RESERVE: Only once main is clear, Look-Grab-Pull the Silver Handle.
-			</Procedure>
-        </Lesson>
-		
-		<Lesson id="EOP-03" title="Water Landings">
-            <Theory>Landing in water is a dangerous activity. Jumpers have become cocooned in the chute fabric and tangled in the lines and have drowned. Only carry out a water landing if unavoidable.</Theory>
-            <Procedure>
-				Airborne Action: Unclip chest strap. 
-				Water Contact Action: Unclip leg straps only upon touching water. Prevents harness fall-out
-				Allow chute to overtake you. Swim clear immediately. Do not attempt to recover chute.
-			</Procedure>
-			<PrimaryResources>
-				IMG-WATERDANGER1
-				IMG-WATERLAND1
-			</PrimaryResources>	
-        </Lesson>
-	
-	</Module>
 	
 	<ReferenceLibrary id="USPA-SIM-2026">
         <Section title="General Lessons">

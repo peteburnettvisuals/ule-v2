@@ -2,8 +2,8 @@
   "course_metadata": {
     "title": "SkyHigh Skydiving Syllabus",
     "version": "3.1",
-    "total_modules": 3,
-    "total_lessons": 9
+    "total_modules": 2,
+    "total_lessons": 4
   },
   "modules": [
     {
@@ -55,60 +55,9 @@
           "requires_grounding": true,
           "tags": ["stable arch", "banana"],
           "primary_assets": []
-        },
-        {
-          "id": "SOP-03",
-          "title": "Decision Window & Deployment",
-          "order": 3,
-          "estimated_time": "5m",
-          "requires_grounding": true,
-          "tags": ["altitude", "safety"],
-          "primary_assets": ["IMG-DECWINDOW1"]
-        },
-        {
-          "id": "SOP-04",
-          "title": "Steering & Landing",
-          "order": 4,
-          "estimated_time": "5m",
-          "requires_grounding": true,
-          "tags": ["toggles", "flaring"],
-          "primary_assets": []
-        }
+        }        
       ]
-    },
-    {
-      "id": "MOD-03",
-      "title": "Emergency Procedures",
-      "icon": "⚠️",
-      "order": 3,
-      "lessons": [
-        {
-          "id": "EOP-01",
-          "title": "Line Twists",
-          "order": 1,
-          "estimated_time": "5m",
-          "requires_grounding": true,
-          "tags": ["bicycle kick"]
-        },
-        {
-          "id": "EOP-02",
-          "title": "Cut-Away Procedure",
-          "order": 2,
-          "estimated_time": "5m",
-          "requires_grounding": true,
-          "tags": ["cutaway", "total mal"]
-        },
-        {
-          "id": "EOP-03",
-          "title": "Water Landings",
-          "order": 3,
-          "estimated_time": "5m",
-          "requires_grounding": true,
-          "tags": ["drown protocol"],
-          "primary_assets": ["IMG-WATERDANGER1", "IMG-WATERLAND1"]
-        }
-      ]
-    }
+    }    
   ],
   "resource_library": {
     "IMG-CHUTE1": { "type": "image", "path": "CAT-GEAR-01_chute_overview.jpg", "label": "Chute Overview" },
@@ -122,3 +71,6 @@
     "VID-ARCH1": { "type": "video", "path": "SOP-02_archdemo.mp4", "label": "Video Demonstration of the Stable Arch Position" }
   }
 }
+
+
+

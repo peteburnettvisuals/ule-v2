@@ -133,7 +133,7 @@ def initialize_engine():
         # Your SIM padding ensures we cross the 32,768 token floor!
         new_cache = caching.CachedContent.create(
             model_name="gemini-2.5-flash",
-            display_name="skyhigh-lms-v2-cdaa-01",
+            display_name="skyhigh-lms-v2-cdaa-02",
             system_instruction=system_instruction,
             contents=[xml_content],
             ttl=datetime.timedelta(hours=1),
@@ -665,8 +665,12 @@ else:
             st.subheader("Live Jump Assistant")
             # Render Pan-Syllabus Chat here
     else:
-        # Render the standard 3-Column Training UI (Current Code)
-        col1, col2, col3 = st.columns([0.2, 0.5, 0.3])
+        # 1. AUTO-HYDRATION GATE
+        if "hydrated" not in st.session_state:
+            with st.spinner("Re-syncing with Cloud Ledger..."):
+                load_audit_progress()
+                st.session_state.hydrated = True
+                st.rerun()
       
         # --- SIDEBAR: PROGRESS & TELEMETRY (JSON VERSION) ---
         with st.sidebar:
