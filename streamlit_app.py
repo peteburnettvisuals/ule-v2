@@ -849,7 +849,7 @@ else:
                     response_text = get_instructor_response(handshake_prompt)
                     
                     # WIDE-NET CATCHER: Looks for anything starting with IMG- inside brackets
-                    asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?((?:IMG|VID)-[^\]\s]+)\]", response_text, re.IGNORECASE)
+                    asset_match = re.search(r"\[(?:Asset\s*(?:ID)?:\s*)?((?:IMG|VID)-[^\]\s]+)\]", response_text, re.IGNORECASE)
 
                     if asset_match:
                         latest_id = asset_match.group(1).strip().upper()
@@ -883,10 +883,9 @@ else:
                 raw_response = get_instructor_response(user_input)
 
                 # 2. THE STRIPPER FIX: Use 'raw_response' and the hardened regex
-                asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?((?:IMG|VID)-[^\]\s]+)\]", raw_response, re.IGNORECASE)
+                asset_match = re.search(r"\[(?:Asset\s*(?:ID)?:\s*)?((?:IMG|VID)-[^\]\s]+)\]", raw_response, re.IGNORECASE)
 
                 if asset_match:
-                    # Normalize to upper case to match manifest keys
                     latest_id = asset_match.group(1).strip().upper()
                     st.session_state.active_visual = latest_id
                     
