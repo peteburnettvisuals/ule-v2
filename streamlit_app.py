@@ -786,7 +786,6 @@ else:
                 # --- 4. RENDER BUTTON ---
                 display_label = f"{icon} {lesson_name} ({est_time})"
                 
-                # --- REFACTORED ROADMAP BUTTON LOGIC ---
                 if st.button(
                     display_label, 
                     key=f"btn_roadmap_{lesson_id}", 
@@ -794,21 +793,22 @@ else:
                     use_container_width=True, 
                     disabled=not is_unlocked
                 ):
-                    # 1. Archive the current chat before moving
-                    st.session_state.lesson_chats[st.session_state.active_lesson] = st.session_state.chat_history
-                    
-                    # 2. Update pointers
+                    # 1. SAVE: Park current live chat in the ledger
+                    if st.session_state.active_lesson:
+                        st.session_state.lesson_chats[st.session_state.active_lesson] = st.session_state.chat_history
+
+                    # 2. SWITCH: Update pointers
                     st.session_state.active_lesson = lesson_id
                     
-                    # 3. CRITICAL: Re-initialize the engine for the NEW context
+                    # 3. CLEAR ENGINE: Force a fresh chat session for the new lesson
                     if "chat_session" in st.session_state:
                         del st.session_state.chat_session
-                        
-                    # 4. Hydrate history for the new lesson (or start fresh)
-                    st.session_state.chat_history = st.session_state.lesson_chats.get(lesson_id, [])
-                    st.session_state.active_visual = None # Clear the HUD for the new lesson
                     
-                    # 5. Determine if we need a fresh handshake
+                    # 4. HYDRATE: Pull history for the new lesson or start fresh
+                    st.session_state.chat_history = st.session_state.lesson_chats.get(lesson_id, [])
+                    st.session_state.active_visual = None # Reset HUD for new lesson
+                    
+                    # 5. HANDSHAKE: If history is empty, trigger the instructor greeting
                     st.session_state.needs_handshake = not bool(st.session_state.chat_history)
                     
                     st.rerun()
