@@ -705,19 +705,21 @@ else:
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col_asst:
-            st.header("🛰️ Graduate Assistant")
-            st.markdown("*You now haver access to the whole syllabus. Ask your questions here.*")
+            st.header("🛰️ Mission Assistant")
+            st.markdown("*Mission Support Mode: Interactive Technical Briefing.*")
             
             grad_chat_container = st.container(height=550)
+            
+            # 1. Initialize Grad History if missing
             if "grad_history" not in st.session_state:
                 st.session_state.grad_history = []
                 
-            # Render Graduate Chat with INLINE ASSETS
+            # 2. Render the Chat Feed (with Inline Asset Detection)
             for msg in st.session_state.grad_history:
                 with grad_chat_container.chat_message(msg["role"]):
-                    st.write(msg["content"])
+                    st.markdown(msg["content"])
                     
-                    # ASSET DETECTION: If the AI mentions a tag, render it immediately below the text
+                    # INLINE STRIPPER: Check each message for [IMG-] or [VID-]
                     asset_match = re.search(r"\[(?:Asset\s*(?:ID)?:\s*)?((?:IMG|VID)-[^\]\s]+)\]", msg["content"], re.IGNORECASE)
                     if asset_match:
                         asset_id = asset_match.group(1).strip().upper()
@@ -727,10 +729,19 @@ else:
                                 st.video(url)
                             else:
                                 st.image(url, use_container_width=True)
-            
-            if grad_input := st.chat_input("Ask for a briefing (e.g., 'Show me the arch')..."):
+                            st.caption(f"📍 DATA REF: {asset_id}")
+
+            # 3. Graduate Input Processing
+            if grad_input := st.chat_input("Request briefing (e.g., 'Show me the arch')...", key="grad_input"):
+                # Append user message
                 st.session_state.grad_history.append({"role": "user", "content": grad_input})
-                # Your existing get_instructor_response logic here...
+                
+                # Get response from the same engine (Persona will shift based on your context_prefix)
+                with st.spinner("Consulting Pan-Syllabus..."):
+                    raw_response = get_instructor_response(grad_input)
+                    st.session_state.grad_history.append({"role": "assistant", "content": raw_response})
+                
+                # Rerun to update the feed and show assets
                 st.rerun()
     else:
         # 1. AUTO-HYDRATION GATE
