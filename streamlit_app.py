@@ -749,7 +749,7 @@ else:
 
             st.markdown("### 📝 Senior Examiner's Notes")
             st.markdown(f'<div class="report-box">{st.session_state.graduation_report}</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True) 
 
         with col_asst:
             st.subheader("🛰️ Mission Assistant")
