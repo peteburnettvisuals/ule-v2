@@ -715,15 +715,17 @@ else:
 
                     /* Bold accents in the report to match the purple brand */
                     .report-box strong, .report-box b {
-                        color: #a855f7 !important;
+                        color: #ffffff !important;
                         font-weight: 700;
                     }
                 </style>
             """, unsafe_allow_html=True)
             st.markdown('<div class="grad-text">', unsafe_allow_html=True)
-            st.header("🏅 Pilot Certification")
+            st.markdown('<div class="report-box">', unsafe_allow_html=True)
+            st.subheader("Training Progress Summary")
             render_mastery_report()
-            st.divider()
+            st.markdown('</div>', unsafe_allow_html=True)
+            st.divider
 
             # --- PERSISTENT REPORT LOGIC ---
             if "graduation_report" not in st.session_state:
