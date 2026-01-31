@@ -724,23 +724,38 @@ else:
             # 3. Module Selection
             st.subheader("Training Modules")
             for i, mod in enumerate(manifest['modules']):
-                # UNLOCK LOGIC: First module is always open, 
-                # others require the PREVIOUS module to be 100% complete
+                # 1. Determine Unlock Status
                 if i == 0:
-                    mod_unlocked = True
+                    mod_unlocked = True # First module always open
                 else:
                     prev_mod = manifest['modules'][i-1]
+                    # Check if ALL lessons in previous module are marked True in archived_status
                     mod_unlocked = all(st.session_state.archived_status.get(l['id']) for l in prev_mod['lessons'])
                 
-                label = f"{mod['icon']} {mod['title']}"
-                if not mod_unlocked:
-                    label = f"🔒 {mod['title']}"
-                    
+                # 2. Define Label
+                base_label = f"{mod['icon']} {mod['title']}"
+                label = base_label if mod_unlocked else f"🔒 {mod['title']}"
+                            
+                # 3. Render Button with clean vars
                 if st.button(label, key=f"side_{mod['id']}", width="stretch", disabled=not mod_unlocked):
+                    # Park current chat before switching
+                    if st.session_state.active_lesson:
+                        st.session_state.lesson_chats[st.session_state.active_lesson] = st.session_state.chat_history
+
+                    # Update Pointers
                     st.session_state.active_mod = mod['id']
-                    st.session_state.active_lesson = mod['lessons'][0]['id']
+                    new_lesson_id = mod['lessons'][0]['id']
+                    st.session_state.active_lesson = new_lesson_id
+
+                    # Clear Engine for fresh context
                     if "chat_session" in st.session_state:
                         del st.session_state.chat_session 
+
+                    # Hydrate New State
+                    st.session_state.chat_history = st.session_state.lesson_chats.get(new_lesson_id, [])
+                    st.session_state.active_visual = None
+                    st.session_state.needs_handshake = not bool(st.session_state.chat_history)
+                    
                     st.rerun()
 
         # MAIN INTERFACE: 3 Columns
