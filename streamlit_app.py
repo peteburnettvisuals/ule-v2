@@ -691,33 +691,46 @@ else:
         col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="medium")
         
         with col_cert:
-            # Inline CSS for High-Contrast White Text
+            # 1. HARDENED GRADUATE CSS
             st.markdown("""
                 <style>
-                    .grad-text, .grad-text p, .grad-text h1, .grad-text h2, .grad-text h3 { color: #ffffff !important; }
-                    .report-box { 
-                        background-color: rgba(255, 255, 255, 0.05); 
-                        padding: 20px; 
-                        border-radius: 12px; 
+                    /* Target the main container's content area */
+                    [data-testid="stVerticalBlockBorderWrapper"] {
+                        color: white !important;
+                    }
+                    
+                    /* Create the "Box" style we can apply to containers */
+                    .cert-box {
+                        background-color: rgba(255, 255, 255, 0.05);
                         border-left: 5px solid #a855f7;
+                        border-radius: 12px;
+                        padding: 25px;
                         margin-bottom: 25px;
                     }
-                    .report-box p, .report-box li { color: #ffffff !important; line-height: 1.6; }
-                    .report-box strong { color: #a855f7 !important; }
+
+                    /* Force all text within these boxes to be white */
+                    .cert-box h1, .cert-box h2, .cert-box h3, .cert-box p, .cert-box li, .cert-box span {
+                        color: #ffffff !important;
+                    }
+                    
+                    /* Standard Streamlit headers can be stubborn, let's catch them too */
+                    .cert-box [data-testid="stHeader"] {
+                        color: #ffffff !important;
+                    }
                 </style>
             """, unsafe_allow_html=True)
 
-            st.markdown('<div class="grad-text">', unsafe_allow_html=True)
             st.header("🏅 Pilot Certification")
-            
-            # BOX 1: PROGRESS TABLE
-            with st.container(border=False):
-                st.markdown('<div class="report-box">', unsafe_allow_html=True)
-                st.subheader("Training Progress Summary")
-                render_mastery_report()
-                st.markdown('</div>', unsafe_allow_html=True)
 
-            # BOX 2: PERSISTENT EXAMINER NOTES
+            # --- BOX 1: PROGRESS SUMMARY ---
+            # We wrap the content in a div with our custom class
+            st.markdown('<div class="cert-box">', unsafe_allow_html=True)
+            st.subheader("Training Progress Summary")
+            render_mastery_report()
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            # --- BOX 2: PERSISTENT EXAMINER NOTES ---
+            # (Your Firestore check logic remains here...)
             if "graduation_report" not in st.session_state:
                 user_email = st.session_state.get("username")
                 user_doc_ref = db.collection("users").document(user_email)
@@ -734,11 +747,10 @@ else:
                         user_doc_ref.update({"final_mastery_report": new_report})
                         st.session_state.graduation_report = new_report
 
-            st.markdown('<div class="report-box">', unsafe_allow_html=True)
+            st.markdown('<div class="cert-box">', unsafe_allow_html=True)
             st.subheader("📝 Senior Examiner's Notes")
-            st.markdown(st.session_state.graduation_report)
-            st.markdown('</div>', unsafe_allow_html=True)
-            
+            # We use st.markdown with unsafe_allow_html to ensure it sits inside the div
+            st.markdown(f'<div style="color:white !important;">{st.session_state.graduation_report}</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col_asst:
