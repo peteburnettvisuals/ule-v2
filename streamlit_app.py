@@ -666,29 +666,45 @@ if not st.session_state.get("authentication_status"):
                         st.warning("All mandatory fields required for certification tracking.")
 
 else:
-    # --- GRADUATE MODE: 3-COLUMN BRIEFING HUD ---
     if check_graduation_status():
         # 1. HARDENED SIDEBAR CSS
         st.markdown("""
             <style>
-                /* Target the first column's inner container directly */
+                /* Target Column 1 (Certification) */
                 [data-testid="stHorizontalBlock"] > div:nth-child(1) [data-testid="stVerticalBlock"] {
-                    background-color: #F1F5F9 !important; /* Professional Off-White */
+                    background-color: #F1F5F9 !important;
                     border-radius: 15px;
                     padding: 30px !important;
                     min-height: 90vh;
                     box-shadow: inset -5px 0 10px rgba(0,0,0,0.05);
                 }
-                    
-                /* 2. MISSION ASSISTANT BUBBLES (Column 2) */
-                /* Targets the chat message container to ensure visibility */
-                [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] {
-                    background-color: rgba(255, 255, 255, 0.05) !important;
-                    border: 1px solid rgba(168, 85, 247, 0.2) !important;
-                    border-radius: 10px;
+                
+                /* Force Dark Slate for Column 1 Text */
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) h1, 
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) h2, 
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) h3, 
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) p, 
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) li,
+                [data-testid="stHorizontalBlock"] > div:nth-child(1) span {
+                    color: #1E293B !important;
                 }
 
-                /* 3. BRIEFING HUD IMAGE/VIDEO (Column 3) */
+                /* --- MISSION ASSISTANT (Column 2) --- */
+                /* Target ONLY the chat message text for white, NOT the input box */
+                [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] p,
+                [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] h1,
+                [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] h2,
+                [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] h3 {
+                    color: #FFFFFF !important;
+                }
+
+                /* THE SHIELD: Ensure Chat Input text remains visible (Dark on White) */
+                [data-testid="stChatInput"] textarea {
+                    color: #31333F !important; /* Standard Streamlit Dark */
+                    -webkit-text-fill-color: #31333F !important;
+                }
+
+                /* BRIEFING HUD (Column 3) Visuals */
                 [data-testid="column"]:nth-of-type(3) img, 
                 [data-testid="column"]:nth-of-type(3) video {
                     border-radius: 10px;
@@ -696,27 +712,9 @@ else:
                     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
                 }
                 
-                /* Force Dark Slate text for EVERYTHING in Column 1 */
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) h1, 
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) h2, 
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) h3, 
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) p, 
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) li,
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) span,
-                [data-testid="stHorizontalBlock"] > div:nth-child(1) div {
-                    color: #1E293B !important;
-                }
-
-                /* Ensure the AI report text specifically is dark slate */
-                .report-text-dark {
-                    color: #1E293B !important;
-                    line-height: 1.6;
-                    font-size: 1.05rem;
-                }
-
-                /* Keep columns 2 and 3 White for the dark theme */
-                [data-testid="stHorizontalBlock"] > div:nth-child(2) *,
-                [data-testid="stHorizontalBlock"] > div:nth-child(3) * {
+                /* Headers for Col 2 & 3 stay white */
+                [data-testid="column"]:nth-of-type(2) h1, [data-testid="column"]:nth-of-type(2) h2, [data-testid="column"]:nth-of-type(2) h3,
+                [data-testid="column"]:nth-of-type(3) h1, [data-testid="column"]:nth-of-type(3) h2, [data-testid="column"]:nth-of-type(3) h3 {
                     color: #FFFFFF !important;
                 }
             </style>
@@ -726,8 +724,7 @@ else:
         col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="large")
         
         with col_cert:
-            render_mastery_report() # Shows the 4/4 table
-            
+            render_mastery_report()
             st.divider()
             
             # PERSISTENT REPORT LOGIC
@@ -751,36 +748,36 @@ else:
 
         with col_asst:
             st.subheader("🛰️ Mission Assistant")
-            grad_chat_container = st.container(height=550)
             
-            # Initialize history with the hard-coded welcome if it's empty
-            if "grad_history" not in st.session_state or len(st.session_state.grad_history) == 0:
+            # --- INITIAL GREETING LOGIC ---
+            if "grad_history" not in st.session_state or not st.session_state.grad_history:
                 st.session_state.grad_history = [{
                     "role": "assistant", 
                     "content": "🚀 **Congratulations on your graduation!**\n\nI am now your on-call Jump Assistant. Feel free to ask me any questions to refresh your memory on the syllabus, or get a reminder about gear, weather, or procedures before your next jump."
                 }]
-                
-            # Render the history
-            for msg in st.session_state.grad_history:
-                with grad_chat_container.chat_message(msg["role"]):
-                    st.write(msg["content"])
+
+            grad_chat_container = st.container(height=550)
+            with grad_chat_container:
+                for msg in st.session_state.grad_history:
+                    with st.chat_message(msg["role"]):
+                        st.markdown(msg["content"])
             
             if grad_input := st.chat_input("Request technical support..."):
                 st.session_state.grad_history.append({"role": "user", "content": grad_input})
                 
-                # Check for Asset Tags in the user query or AI response to update the HUD
-                raw_response = get_instructor_response(grad_input)
-                
-                asset_match = re.search(r"\[(?:Asset\s*(?:ID)?:\s*)?((?:IMG|VID)-[^\]\s]+)\]", raw_response, re.IGNORECASE)
-                if asset_match:
-                    st.session_state.active_visual = asset_match.group(1).strip().upper()
-                
-                st.session_state.grad_history.append({"role": "assistant", "content": raw_response})
+                with st.spinner("Consulting Pan-Syllabus..."):
+                    raw_response = get_instructor_response(grad_input)
+                    
+                    # Asset detection logic
+                    asset_match = re.search(r"\[(?:Asset\s*(?:ID)?:\s*)?((?:IMG|VID)-[^\]\s]+)\]", raw_response, re.IGNORECASE)
+                    if asset_match:
+                        st.session_state.active_visual = asset_match.group(1).strip().upper()
+                    
+                    st.session_state.grad_history.append({"role": "assistant", "content": raw_response})
                 st.rerun()
 
         with col_hud:
             st.subheader("Support Resources")
-            # Reuse your existing HUD logic to surface assets in the dedicated column
             render_reference_deck()
     else:
         # 1. AUTO-HYDRATION GATE
