@@ -667,8 +667,6 @@ if not st.session_state.get("authentication_status"):
 
 else:
     if check_graduation_status():
-        # --- GRADUATE MODE: 3-COLUMN BRIEFING HUD ---
-    if check_graduation_status():
         # 1. FINAL CONSOLIDATED CSS
         st.markdown("""
             <style>
