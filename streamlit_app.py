@@ -689,14 +689,62 @@ else:
         col_cert, col_asst, col_hud = st.columns([0.4, 0.3, 0.3], gap="medium")
         
         with col_cert:
+            st.markdown("""
+                <style>
+                    /* Force white text for all standard elements in Graduate Mode */
+                    .grad-text, .grad-text p, .grad-text span, .grad-text li, .grad-text div {
+                        color: #FFFFFF !important;
+                        font-family: 'Inter', sans-serif;
+                    }
+                    
+                    /* Specialized container for the Senior Examiner's Notes */
+                    .report-box { 
+                        background-color: rgba(255, 255, 255, 0.05); 
+                        padding: 25px; 
+                        border-radius: 12px; 
+                        border-left: 5px solid #a855f7;
+                        margin-top: 15px;
+                    }
+                    
+                    /* Ensuring the Examiner's Notes specifically remain white */
+                    .report-box p, .report-box li {
+                        color: #FFFFFF !important;
+                        font-size: 1.05rem !important;
+                        line-height: 1.6 !important;
+                    }
+
+                    /* Bold accents in the report to match the purple brand */
+                    .report-box strong, .report-box b {
+                        color: #a855f7 !important;
+                        font-weight: 700;
+                    }
+                </style>
+            """, unsafe_allow_html=True)
             st.markdown('<div class="grad-text">', unsafe_allow_html=True)
+            st.header("🏅 Pilot Certification")
             render_mastery_report()
             st.divider()
-            
+
+            # --- PERSISTENT REPORT LOGIC ---
             if "graduation_report" not in st.session_state:
-                with st.spinner("📜 Generating Final Mastery Report..."):
-                    st.session_state.graduation_report = generate_pan_syllabus_report()
-            
+                user_email = st.session_state.get("username")
+                user_doc_ref = db.collection("users").document(user_email)
+                user_doc = user_doc_ref.get()
+                
+                # Check if Firestore already has the report
+                saved_report = user_doc.to_dict().get("final_mastery_report")
+                
+                if saved_report:
+                    st.session_state.graduation_report = saved_report
+                else:
+                    with st.spinner("📜 Finalizing Training Record in Cloud..."):
+                        # 1. Generate new report
+                        new_report = generate_pan_syllabus_report()
+                        # 2. Save to Firestore immediately
+                        user_doc_ref.update({"final_mastery_report": new_report})
+                        # 3. Update session state
+                        st.session_state.graduation_report = new_report
+
             st.markdown("### 📝 Senior Examiner's Notes")
             st.markdown(f'<div class="report-box">{st.session_state.graduation_report}</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
