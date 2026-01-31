@@ -679,6 +679,22 @@ else:
                     min-height: 90vh;
                     box-shadow: inset -5px 0 10px rgba(0,0,0,0.05);
                 }
+                    
+                /* 2. MISSION ASSISTANT BUBBLES (Column 2) */
+                /* Targets the chat message container to ensure visibility */
+                [data-testid="column"]:nth-of-type(2) [data-testid="stChatMessage"] {
+                    background-color: rgba(255, 255, 255, 0.05) !important;
+                    border: 1px solid rgba(168, 85, 247, 0.2) !important;
+                    border-radius: 10px;
+                }
+
+                /* 3. BRIEFING HUD IMAGE/VIDEO (Column 3) */
+                [data-testid="column"]:nth-of-type(3) img, 
+                [data-testid="column"]:nth-of-type(3) video {
+                    border-radius: 10px;
+                    border: 2px solid #a855f7;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+                }
                 
                 /* Force Dark Slate text for EVERYTHING in Column 1 */
                 [data-testid="stHorizontalBlock"] > div:nth-child(1) h1, 
