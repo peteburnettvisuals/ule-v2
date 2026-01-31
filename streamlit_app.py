@@ -433,7 +433,7 @@ def process_ai_response(response_text):
     
     # REGEX: Catch [IMG-XXXX] or [AssetID: IMG-XXXX]
     # We use re.IGNORECASE to be safe
-    found_assets = re.findall(r"\[(?:AssetID:\s*)?(IMG-.*?)\]", response_text, re.IGNORECASE)
+    found_assets = re.findall(r"\[(?:Asset\s*ID:\s*)?((?:IMG|VID)-[^\]\s]+)\]", response_text, re.IGNORECASE)
     
     if found_assets:
         # Take the most recent one mentioned
@@ -563,45 +563,40 @@ if not st.session_state.get("authentication_status"):
             auth_result = authenticator.login(
                 location="main", 
                 fields={'Form name': 'Login', 'Username': 'Email', 'Password': 'Password'}
-    )
+            )
             
             # --- THIS IS THE CRITICAL SPOT ---
+            # --- THE FIXED LOGIN & HYDRATION LOGIC ---
             if st.session_state.get("authentication_status"):
-                # If this is the first run after refresh, force a sync
-                if not st.session_state.get("hydrated", False):
-                    load_audit_progress()
-                    st.session_state["hydrated"] = True
-                    st.rerun()
                 user_email = st.session_state["username"] 
                 user_info = credentials_data['usernames'].get(user_email, {})
                 
-                # A. HYDRATE: Fill the profile data first
+                # 1. PROFILE HYDRATION
                 st.session_state["name"] = user_info.get("name", "Student")
                 st.session_state["u_profile"] = f"Experience: {user_info.get('experience', 'Novice')}. Goals: {user_info.get('aspiration', 'A-License')}"
-                st.session_state["user_profile"] = user_info # Safety backup
 
-                # NEW: Clear old user data before hydrating new user
-                keys_to_reset = ['chat_history', 'lesson_chats', 'archived_status', 'active_visual']
-                for key in keys_to_reset:
-                    if key in st.session_state:
-                        del st.session_state[key]
+                # 2. STATE RESTORATION
+                # We only clear and reload if we haven't 'hydrated' this specific session yet
+                if not st.session_state.get("hydrated", False):
+                    with st.spinner("Syncing Training Ledger..."):
+                        # Clear old session artifacts before loading new ones
+                        for key in ['chat_session', 'active_cache']:
+                            if key in st.session_state:
+                                del st.session_state[key]
+                        
+                        load_audit_progress() # This sets active_lesson and archived_status
+                        st.session_state["hydrated"] = True
 
-                # B. TRIGGER ENGINE: Now that we have the profile, fire up Vertex
+                # 3. ENGINE WARMUP
                 if "model" not in st.session_state:
                     with st.spinner("Warming up Flight Instructor Engine..."):
                         st.session_state.model = initialize_engine()
 
-                # C. RESTORE: Load previous lesson data
-                with st.spinner("Syncing Training Ledger..."):
-                    load_audit_progress()
+                # 4. HANDSHAKE CHECK
+                # If history exists for the lesson we resumed, skip the intro
+                st.session_state.needs_handshake = not bool(st.session_state.chat_history)
 
-                # If we found history for the active lesson, we DON'T need a handshake
-                if st.session_state.chat_history:
-                    st.session_state.needs_handshake = False
-                else:
-                    st.session_state.needs_handshake = True
-
-                time.sleep(1)
+                time.sleep(0.5)
                 st.rerun()
                 
             elif st.session_state.get("authentication_status") is False:
@@ -835,7 +830,7 @@ else:
                     response_text = get_instructor_response(handshake_prompt)
                     
                     # WIDE-NET CATCHER: Looks for anything starting with IMG- inside brackets
-                    asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?(IMG-[^\]\s]+)\]", response_text, re.IGNORECASE)
+                    asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?((?:IMG|VID)-[^\]\s]+)\]", response_text, re.IGNORECASE)
 
                     if asset_match:
                         latest_id = asset_match.group(1).strip().upper()
@@ -867,7 +862,7 @@ else:
                 raw_response = get_instructor_response(user_input)
 
                 # WIDE-NET ASSET DETECTION
-                asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?(IMG-[^\]\s]+)\]", response_text, re.IGNORECASE)
+                asset_match = re.search(r"\[(?:Asset\s*ID:\s*)?((?:IMG|VID)-[^\]\s]+)\]", response_text, re.IGNORECASE)
 
                 if asset_match:
                     latest_id = asset_match.group(1).strip().upper()

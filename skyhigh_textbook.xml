@@ -101,7 +101,7 @@
         </Lesson>
 		
 		<Lesson id="SOP-02" title="Aircraft Exit Procedure">
-            <Theory>A clean exit sets up a stable freefall, and prevents "Tumble" malfunctions</Theory>
+            <Theory>A clean exit sets up a stable freefall, and prevents "Tumble" malfunctions. NOTE: use the VID-ARCH1 as a video to demonstrate the position.</Theory>
             <Action>Maintain the 'Banana' stable arch in freefall: hips pushed forward, head back, arms symmetrical</Action>
 			<PrimaryResources>
 				VID-ARCH1
