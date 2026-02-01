@@ -1070,25 +1070,27 @@ else:
                         <div style="
                             background-color: rgba(168, 85, 247, 0.1);
                             border-left: 3px solid #a855f7;
-                            padding: 10px;
+                            padding: 12px;
                             margin-top: -10px;
-                            border-radius: 0 0 5px 5px;
+                            border-radius: 0 0 8px 8px;
                             font-family: 'Inter', sans-serif;
                         ">
-                            <p style="
+                            <span style="
+                                display: block;
                                 margin: 0;
-                                font-size: 0.75rem;
-                                color: #ffffff;
+                                font-size: 0.7rem;
+                                color: #a855f7 !important;
                                 text-transform: uppercase;
-                                letter-spacing: 1px;
-                                font-weight: 600;
-                            ">Learning Resource</p>
-                            <p style="
-                                margin: 0;
-                                font-size: 1.1rem;
-                                color: #aaaaaa;
+                                letter-spacing: 1.5px;
                                 font-weight: 700;
-                            ">{clean_id}</p>
+                            ">Learning Resource</span>
+                            <span style="
+                                display: block;
+                                margin-top: 2px;
+                                font-size: 1.1rem;
+                                color: #FFFFFF !important;
+                                font-weight: 700;
+                            ">{clean_id}</span>
                         </div>
                     """, unsafe_allow_html=True)
                 else:
