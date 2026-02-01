@@ -893,10 +893,10 @@ else:
                 <div style="margin-bottom: 25px;">
                     <span style="font-size: 1.2rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Module:</span><br>
                     <h2 style="margin-top: -15px; color: white;">{mod_display_name}</h2>
-                    <p style="font-size: 1rem; color: white; line-height: 1.4;">{mod_desc_text}</p>
+                    <span style="font-size: 1.2rem; color: #ffffff; font-weight: bold; text-transform: uppercase;">{mod_desc_text}</span>
                 </div>
                 <hr style="border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
-                <span style="font-size: 1.2rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Lessons:</span>
+                <span style="font-size: 1.2rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Lessons:</span><br>
             """, unsafe_allow_html=True)
 
             # 2. Iterate through lessons in the current module
