@@ -1078,7 +1078,7 @@ else:
                             <span style="
                                 display: block;
                                 margin: 0;
-                                font-size: 0.7rem;
+                                font-size: 0.6rem;
                                 color: #a855f7 !important;
                                 text-transform: uppercase;
                                 letter-spacing: 1.5px;
@@ -1087,7 +1087,7 @@ else:
                             <span style="
                                 display: block;
                                 margin-top: 2px;
-                                font-size: 1.1rem;
+                                font-size: 0.9rem;
                                 color: #FFFFFF !important;
                                 font-weight: 700;
                             ">{clean_id}</span>
