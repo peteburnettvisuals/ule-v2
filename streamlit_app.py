@@ -787,6 +787,13 @@ else:
         # --- SIDEBAR: PROGRESS & TELEMETRY (JSON VERSION) ---
         with st.sidebar:
             st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline4.png", use_container_width=True)
+
+            # NEW: Identity Block
+            st.markdown(f"""
+                <div style="text-align: left; margin-top: -20px; padding-bottom: 20px;">
+                    <p style="font-size: 1rem; color: #a855f7; margin-top: 0px;">USER: {st.session_state.get('name', 'Username')}<br>COMPANY: {st.session_state.get('company', 'Company')}</p>
+                </div>
+            """, unsafe_allow_html=True)
             
             # 1. Calculation: Extract all lesson IDs from the JSON manifest
             all_lessons = [lesson for mod in manifest['modules'] for lesson in mod['lessons']]
@@ -831,13 +838,7 @@ else:
             st_echarts(options=gauge_option, height="150px", key=f"gauge_{int(time.time())}")
             st.markdown(f"<p style='text-align: center; margin-top:-30px;'>{completed_count} / {total_count} LESSONS COMPLETE</p>", unsafe_allow_html=True)
             
-            # NEW: Identity Block
-            st.markdown(f"""
-                <div style="text-align: left; margin-top: -20px; padding-bottom: 20px;">
-                    <p style="font-size: 1rem; color: #a855f7; margin-top: 0px;">USER: {st.session_state.get('name', 'Username')}</p>
-                    <p style="font-size: 1rem; color: #a855f7; margin-top: 0px;">COMPANY: {st.session_state.get('company', 'Company')}</p>
-                </div>
-            """, unsafe_allow_html=True)
+            
             
             # 3. Module Selection
             st.subheader("Training Modules")
@@ -893,7 +894,7 @@ else:
                 <div style="margin-bottom: 25px;">
                     <span style="font-size: 1.2rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Module:</span><br>
                     <h2 style="margin-top: -15px; color: white;">{mod_display_name}</h2>
-                    <span style="font-size: 1.2rem; color: #ffffff; font-weight: bold; text-transform: uppercase;">{mod_desc_text}</span>
+                    <span style="font-size: 1rem; color: #ffffff;">{mod_desc_text}</span>
                 </div>
                 <hr style="border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
                 <span style="font-size: 1.2rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Lessons:</span><br>
