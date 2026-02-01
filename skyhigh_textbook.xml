@@ -18,12 +18,12 @@
             <Description>A diagram showing the decision window from 5000ft AGL to 3000ft AGL</Description>
             <Context>Crucial for teaching altitude awareness and the 3000ft manadtatory deployment height</Context>
         </Asset>
-		<Asset id="IMG-CUNIM1" type="image">
-            <Description>An image of a cumulonimbus cloud formation.</Description>
+		<Asset id="VID-CUNIM1" type="video">
+            <Description>An video of cumulonimbus cloud formations.</Description>
             <Context>Used to show students what these type of clouds look like.</Context>
         </Asset>
-		<Asset id="IMG-CLOUD1" type="image">
-            <Description>An image of low cloud over a drop zone</Description>
+		<Asset id="VID-LOWCLOUD1" type="video">
+            <Description>An video of low cloud over a drop zone</Description>
             <Context>Used to illustate how low cloud dandgerously reduces visibility and manouvering options.</Context>
         </Asset>
 		<Asset id="IMG-WATERDANGER1" type="image">
@@ -95,8 +95,8 @@
 				Max Wind Speed at DZ: Maximum ground wind speed at drop zone is 20 knots
 			</DangerConditions>
 			<PrimaryResources>
-				IMG-CUNIM1
-				IMG-CLOUD1
+				VID-CUNIM1
+				VID-LOWCLOUD1
 			</PrimaryResources>	
         </Lesson>
 		
@@ -107,8 +107,6 @@
 				VID-ARCH1
 			</PrimaryResources>	
         </Lesson>
-		
-		
 		
     </Module>
 	

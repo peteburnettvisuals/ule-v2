@@ -136,7 +136,7 @@ def initialize_engine():
         # Your SIM padding ensures we cross the 32,768 token floor!
         new_cache = caching.CachedContent.create(
             model_name="gemini-2.5-flash",
-            display_name="skyhigh-lms-v2-cdaa-03",
+            display_name="skyhigh-lms-v2-cdaa-04",
             system_instruction=system_instruction,
             contents=[xml_content],
             ttl=datetime.timedelta(hours=1),
@@ -511,7 +511,7 @@ def render_mastery_report():
     mastery_data = []
     for mod in manifest['modules']:
         for lesson in mod['lessons']:
-            status = "✅ Competent" if st.session_state.archived_status.get(lesson['id']) else "⏳ Pending"
+            status = "✅ Passed" if st.session_state.archived_status.get(lesson['id']) else "⏳ Pending"
             mastery_data.append({
                 "Module": mod['title'],
                 "Lesson": lesson['title'],
@@ -831,7 +831,13 @@ else:
             st_echarts(options=gauge_option, height="150px", key=f"gauge_{int(time.time())}")
             st.markdown(f"<p style='text-align: center; margin-top:-30px;'>{completed_count} / {total_count} LESSONS COMPLETE</p>", unsafe_allow_html=True)
             
-            st.divider() #
+            # NEW: Identity Block
+            st.markdown(f"""
+                <div style="text-align: center; margin-top: -20px; padding-bottom: 20px;">
+                    <h3 style="margin-bottom: 0px; color: white;">{st.session_state.get('user_display_name', 'Peter')}</h3>
+                    <p style="font-size: 0.9rem; color: #a855f7; margin-top: 0px;">{st.session_state.get('organization', 'SkyHigh Academy')}</p>
+                </div>
+            """, unsafe_allow_html=True)
             
             # 3. Module Selection
             st.subheader("Training Modules")
@@ -880,7 +886,18 @@ else:
             module_data = next((m for m in manifest['modules'] if m['id'] == active_mod_id), manifest['modules'][0])
             
             mod_display_name = module_data['title']
-            st.subheader(f"Lessons for {mod_display_name}")
+            mod_desc_text = module_data['module_description']
+            
+            # 1. Module Context Header
+            st.markdown(f"""
+                <div style="margin-bottom: 25px;">
+                    <span style="font-size: 0.8rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Module:</span><br>
+                    <h2 style="margin-top: -5px; color: white;">{mod_display_name}</h2>
+                    <p style="font-size: 0.95rem; color: #cbd5e1; line-height: 1.4;">{mod_desc_text}</p>
+                </div>
+                <hr style="border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
+                <span style="font-size: 0.8rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Lessons:</span>
+            """, unsafe_allow_html=True)
 
             # 2. Iterate through lessons in the current module
             lessons = module_data.get('lessons', [])
