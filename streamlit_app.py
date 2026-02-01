@@ -790,9 +790,11 @@ else:
 
             # NEW: Identity Block
             st.markdown(f"""
+                <hr style="border-top: 1px solid rgba(0,0,0,0.5); margin-top: 10px; margin-bottom: 10px;">
                 <div style="text-align: left; margin-top: -20px; padding-bottom: 20px;">
                     <p style="font-size: 1rem; color: #a855f7; margin-top: 0px;">USER: {st.session_state.get('name', 'Username')}<br>COMPANY: {st.session_state.get('company', 'Company')}</p>
                 </div>
+                <hr style="border-top: 1px solid rgba(0,0,0,0.5); margin-top: 10px; margin-bottom: 10px;">
             """, unsafe_allow_html=True)
             
             # 1. Calculation: Extract all lesson IDs from the JSON manifest
@@ -894,9 +896,10 @@ else:
                 <div style="margin-bottom: 25px;">
                     <span style="font-size: 1.2rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Module:</span><br>
                     <h2 style="margin-top: -15px; color: white;">{mod_display_name}</h2>
+                    <hr style="border-top: 1px solid rgba(255,255,255,0.3); margin-top: 10px; margin-bottom: 10px">
                     <span style="font-size: 1rem; color: #ffffff;">{mod_desc_text}</span>
                 </div>
-                <hr style="border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
+                <hr style="border-top: 1px solid rgba(255,255,255,0.3); margin-top: 10px; margin-bottom: 10px">
                 <span style="font-size: 1.2rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Lessons:</span><br>
             """, unsafe_allow_html=True)
 
