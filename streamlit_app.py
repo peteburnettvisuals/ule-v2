@@ -834,8 +834,8 @@ else:
             # NEW: Identity Block
             st.markdown(f"""
                 <div style="text-align: left; margin-top: -20px; padding-bottom: 20px;">
-                    <<p style="font-size: 0.9rem; color: #a855f7; margin-top: 0px;">USER: {st.session_state.get('name', 'Username')}</p>
-                    <p style="font-size: 0.9rem; color: #a855f7; margin-top: 0px;">COMPANY: {st.session_state.get('company', 'Company')}</p>
+                    <p style="font-size: 1rem; color: #a855f7; margin-top: 0px;">USER: {st.session_state.get('name', 'Username')}</p>
+                    <p style="font-size: 1rem; color: #a855f7; margin-top: 0px;">COMPANY: {st.session_state.get('company', 'Company')}</p>
                 </div>
             """, unsafe_allow_html=True)
             
@@ -891,12 +891,12 @@ else:
             # 1. Module Context Header
             st.markdown(f"""
                 <div style="margin-bottom: 25px;">
-                    <span style="font-size: 1rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Module:</span><br>
-                    <h2 style="margin-top: -5px; color: white;">{mod_display_name}</h2>
-                    <p style="font-size: 1rem; color: #ffffff; line-height: 1.4;">{mod_desc_text}</p>
+                    <span style="font-size: 1.2rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Module:</span><br>
+                    <h2 style="margin-top: -15px; color: white;">{mod_display_name}</h2>
+                    <p style="font-size: 1rem; color: white; line-height: 1.4;">{mod_desc_text}</p>
                 </div>
                 <hr style="border-top: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
-                <span style="font-size: 1rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Lessons:</span>
+                <span style="font-size: 1.2rem; color: #a855f7; font-weight: bold; text-transform: uppercase;">Lessons:</span>
             """, unsafe_allow_html=True)
 
             # 2. Iterate through lessons in the current module
