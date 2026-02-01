@@ -1096,5 +1096,31 @@ else:
                 else:
                     st.error(f"Failed to resolve {asset_id}")
             else:
-                # The Placeholder you mentioned
-                st.info("🛰️ Awaiting instructor resources. Training assets will appear here when deployed.")
+                # --- COLUMN 3 HUD PLACEHOLDER ---
+                st.markdown(f"""
+                    <div style="
+                        border: 1px dashed rgba(168, 85, 247, 0.4);
+                        border-radius: 10px;
+                        padding: 40px 20px;
+                        text-align: center;
+                        background-color: rgba(255, 255, 255, 0.02);
+                    ">
+                        <span style="
+                            display: block;
+                            font-size: 1.5rem;
+                            margin-bottom: 10px;
+                        ">🛰️</span>
+                        <span style="
+                            display: block;
+                            color: #FFFFFF !important;
+                            font-size: 0.9rem;
+                            font-weight: 500;
+                            letter-spacing: 0.5px;
+                            line-height: 1.4;
+                        ">Awaiting instructor resources.<br>
+                            <span style="color: #ffffff !important; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">
+                                Learning resources will appear here when the instructor shares them with you.
+                            </span>
+                        </span>
+                    </div>
+                """, unsafe_allow_html=True)
