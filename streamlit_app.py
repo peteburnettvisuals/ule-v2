@@ -794,7 +794,7 @@ else:
                 <hr style="border-top: 1px solid rgba(0,0,0,0.1); margin-top: 10px; margin-bottom: 10px;">
                 <span style="font-size: 1.2rem; color: #222222; font-weight: bold; text-transform: uppercase;">Student Profile:</span><br>
                 <div style="text-align: left; margin-top: 5px; margin-bottom: 5px;">
-                    <p style="font-size: 1rem; color: #a855f7; margin-top: 0px;">USER: {st.session_state.get('name', 'Username')}<br>COMPANY: {st.session_state.get('company', 'Company')}</p>
+                    <p style="font-size: 1rem; color: #a855f7; margin-top: 0px;"><b>User:</b> {st.session_state.get('name', 'Username')}<br><b>Company:</b> {st.session_state.get('company', 'Company')}</p>
                 </div>
                 <hr style="border-top: 1px solid rgba(0,0,0,0.1); margin-top: 10px; margin-bottom: 10px;">
             """, unsafe_allow_html=True)
@@ -847,7 +847,7 @@ else:
             # 3. Module Selection
             # NEW: Identity Block
             st.markdown(f"""
-                <span style="font-size: 1.2rem; color: #222222; font-weight: bold; text-transform: uppercase;">Course Modules</span><br><br>
+                <span style="font-size: 1.2rem; color: #222222; font-weight: bold; text-transform: uppercase;">Course Modules:</span><br>
             """, unsafe_allow_html=True)
 
             for i, mod in enumerate(manifest['modules']):
