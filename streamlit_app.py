@@ -585,6 +585,7 @@ if not st.session_state.get("authentication_status"):
                 
                 # 1. PROFILE HYDRATION
                 st.session_state["name"] = user_info.get("name", "Student")
+                st.session_state["company"] = user_info.get("company", "Company")
                 st.session_state["u_profile"] = f"Experience: {user_info.get('experience', 'Novice')}. Goals: {user_info.get('aspiration', 'A-License')}"
 
                 # 2. STATE RESTORATION
@@ -790,11 +791,12 @@ else:
 
             # NEW: Identity Block
             st.markdown(f"""
-                <hr style="border-top: 1px solid rgba(0,0,0,0.2); margin-top: 10px; margin-bottom: 10px;">
+                <hr style="border-top: 1px solid rgba(0,0,0,0.1); margin-top: 10px; margin-bottom: 10px;">
+                <span style="font-size: 1.2rem; color: #222222; font-weight: bold; text-transform: uppercase;">Student Profile:</span><br>
                 <div style="text-align: left; margin-top: 5px; margin-bottom: 5px;">
                     <p style="font-size: 1rem; color: #a855f7; margin-top: 0px;">USER: {st.session_state.get('name', 'Username')}<br>COMPANY: {st.session_state.get('company', 'Company')}</p>
                 </div>
-                <hr style="border-top: 1px solid rgba(0,0,0,0.2); margin-top: 10px; margin-bottom: 10px;">
+                <hr style="border-top: 1px solid rgba(0,0,0,0.1); margin-top: 10px; margin-bottom: 10px;">
             """, unsafe_allow_html=True)
             
             # 1. Calculation: Extract all lesson IDs from the JSON manifest
@@ -843,7 +845,11 @@ else:
             
             
             # 3. Module Selection
-            st.subheader("Training Modules")
+            # NEW: Identity Block
+            st.markdown(f"""
+                <span style="font-size: 1.2rem; color: #222222; font-weight: bold; text-transform: uppercase;">Course Modules</span><br><br>
+            """, unsafe_allow_html=True)
+
             for i, mod in enumerate(manifest['modules']):
                 # 1. Determine Unlock Status
                 if i == 0:
