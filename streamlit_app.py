@@ -294,6 +294,7 @@ def load_audit_progress():
             # Note: We use .get() fallbacks to prevent crashes if a field is missing
             st.session_state["u_profile"] = f"Experience: {u_data.get('experience', 'Novice')}. Goals: {u_data.get('aspiration', 'A-License')}"
             st.session_state["user_name"] = u_data.get("full_name", "Student")
+            st.session_state["company"] = u_data.get("company", "Company")
 
         # 2. HYDRATE LESSONS (From 'lessons' subcollection)
         lessons_ref = db.collection("users").document(user_email).collection("lessons").stream()
