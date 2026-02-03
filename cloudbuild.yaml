@@ -23,3 +23,6 @@ steps:
       - '--allow-unauthenticated' # Necessary for a public tech demo
       - '--memory'
       - '2Gi' # Vertex/Streamlit can be memory hungry
+
+options:
+  logging: CLOUD_LOGGING_ONLY      
