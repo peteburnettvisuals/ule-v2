@@ -1,0 +1,25 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/ule-demo-app', '.']
+
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/ule-demo-app']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'ule-demo'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/ule-demo-app'
+      - '--region'
+      - 'europe-west3' # Matching your Frankfurt Vertex location
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated' # Necessary for a public tech demo
+      - '--memory'
+      - '2Gi' # Vertex/Streamlit can be memory hungry

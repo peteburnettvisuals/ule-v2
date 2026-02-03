@@ -26,6 +26,10 @@ def local_css(file_name):
 
 local_css("style.css")
 
+def get_secret(key):
+    # Check OS Environment (Cloud) first, then Streamlit Secrets (Local)
+    return os.environ.get(key) or st.secrets.get(key)
+
 # ----- Vertex Caching -----------
 
 PROJECT_ID = "ulev2-485705"  # Replace with your actual ID
