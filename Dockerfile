@@ -1,20 +1,21 @@
-# Use the official lightweight Python image.
+# 1. Use a lightweight Python image
 FROM python:3.11-slim
 
-# Allow statements and log messages to immediately appear in the Knative logs
-ENV PYTHONUNBUFFERED True
+# 2. Prevent Python from buffering logs (makes debugging easier in Cloud Run)
+ENV PYTHONUNBUFFERED=1
 
-# Copy local code to the container image.
-ENV APP_HOME /app
-WORKDIR $APP_HOME
-COPY . ./
+# 3. Set the working directory
+WORKDIR /app
 
-# Install production dependencies.
+# 4. Copy requirements and install
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Streamlit-specific configuration
-ENV STREAMLIT_SERVER_PORT=8080
-ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+# 5. Copy the rest of your code
+COPY . .
 
-# Run the web service on container startup.
-CMD ["streamlit", "run", "main.py", "--server.port=8080", "--server.address=0.0.0.0"]
+# 6. Streamlit's default port is 8501, but Cloud Run expects 8080
+EXPOSE 8080
+
+# 7. Start Streamlit, mapping the port to 8080
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8080", "--server.address=0.0.0.0"]

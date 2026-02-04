@@ -351,7 +351,7 @@ def resolve_asset_url(asset_id):
             version="v4",
             expiration=timedelta(minutes=15),
             method="GET",
-            # THE FIX: Use the exact email from your IAM screenshot
+            # THE FIX: Use the exact email from your IAM screenshot.
             service_account_email="core-master@otterspool-labs-core.iam.gserviceaccount.com",
             access_token=creds.token
         )
