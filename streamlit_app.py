@@ -7,6 +7,8 @@ import time
 import datetime
 from datetime import timedelta
 import xml.etree.ElementTree as ET
+import google.auth
+from google.auth.transport.requests import Request
 
 # 2. UI Components & Auth
 import streamlit_authenticator as stauth
@@ -325,7 +327,7 @@ def load_audit_progress():
 
 # New Asset Resolver helper
 def resolve_asset_url(asset_id):
-    """Generates a secure Signed URL for root-level bucket assets."""
+    """Generates a secure Signed URL using IAM remote signing (Keyless)."""
     if not asset_id:
         return None
     
@@ -335,21 +337,26 @@ def resolve_asset_url(asset_id):
     if not asset_info:
         return None
     
-    # 1. DIRECT ROOT PATH: Since you moved them out of the 'ule2/' subfolder
     filename = asset_info['path']
-    blob = bucket.blob(filename) # Looking directly in the bucket root
+    blob = bucket.blob(filename)
     
     try:
-        # 2. KEYLESS SIGNING: Using the Service Account Token Creator power
+        # 1. GET THE TOKEN: We need a fresh access token from your ADC login
+        # This is the "Keyless" handshake that replaces the JSON key file.
+        creds, _ = google.auth.default()
+        auth_request = Request()
+        creds.refresh(auth_request) # This fetches a fresh 'pen' from Google
+        
+        # 2. REMOTE SIGNING: Pass the service account AND the access token
         url = blob.generate_signed_url(
             version="v4",
             expiration=timedelta(minutes=15),
             method="GET",
-            service_account_email=f"{PROJECT_ID}@appspot.gserviceaccount.com"
+            service_account_email=f"{PROJECT_ID}@appspot.gserviceaccount.com",
+            access_token=creds.token # THE MAGIC INGREDIENT
         )
         return url
     except Exception as e:
-        # If this still fails, check the terminal for the specific error string
         print(f"❌ GCS Signing Error: {e}")
         return None
 
@@ -537,7 +544,7 @@ def render_reference_deck():
         st.video(signed_url)
     else:
         # Standard square image
-        st.image(signed_url, use_container_width=True)
+        st.image(signed_url, width='stretch')
     
     # Large scale label (No header, just clean text)
     st.markdown(f"**DATA REF:** {asset_id}")
@@ -775,7 +782,7 @@ else:
       
         # --- SIDEBAR: PROGRESS & TELEMETRY (JSON VERSION) ---
         with st.sidebar:
-            st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline4.png", use_container_width=True)
+            st.image("https://peteburnettvisuals.com/wp-content/uploads/2026/01/ULEv2-inline4.png", width='stretch')
 
             # NEW: Identity Block
             st.markdown(f"""
@@ -936,7 +943,7 @@ else:
                     display_label, 
                     key=f"btn_roadmap_{lesson_id}", 
                     type="primary" if is_active else "secondary", 
-                    use_container_width=True, 
+                    width='stretch', 
                     disabled=not is_unlocked
                 ):
                     # 1. SAVE: Park current live chat in the ledger
@@ -1057,7 +1064,7 @@ else:
                         st.caption("📽️ Motion Demo: Use controls to seek or replay.")
                     else:
                         # Renders 1:1 Static Image
-                        st.image(signed_url, use_container_width=True)
+                        st.image(signed_url, width='stretch')
                     
                     # 3. RENDER THE STYLED HUD CAPTION
                     st.markdown(f"""
