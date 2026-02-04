@@ -355,6 +355,7 @@ def resolve_asset_url(asset_id):
             service_account_email="core-master@otterspool-labs-core.iam.gserviceaccount.com",
             access_token=creds.token
         )
+        print(f"DEBUG: Generated URL for {clean_id}: {url}")
         return url
     except Exception as e:
         print(f"❌ GCS Signing Error: {e}")
