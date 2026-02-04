@@ -325,7 +325,7 @@ def load_audit_progress():
 
 # New Asset Resolver helper
 def resolve_asset_url(asset_id):
-    """Generates a secure Signed URL without requiring a local JSON key."""
+    """Generates a secure Signed URL for root-level bucket assets."""
     if not asset_id:
         return None
     
@@ -333,26 +333,24 @@ def resolve_asset_url(asset_id):
     asset_info = manifest['resource_library'].get(clean_id)
     
     if not asset_info:
-        st.sidebar.error(f"Manifest Lookup Failed: '{clean_id}'")
         return None
     
+    # 1. DIRECT ROOT PATH: Since you moved them out of the 'ule2/' subfolder
     filename = asset_info['path']
-    blob_path = f"ule2/{filename}" # Ensure this matches your bucket structure
-    blob = bucket.blob(blob_path)
+    blob = bucket.blob(filename) # Looking directly in the bucket root
     
     try:
-        # NEW: Keyless signing logic
-        # We tell the library to sign using our Team identity 
+        # 2. KEYLESS SIGNING: Using the Service Account Token Creator power
         url = blob.generate_signed_url(
             version="v4",
             expiration=timedelta(minutes=15),
             method="GET",
-            # This is the "Keyless" secret: sign as the project identity
             service_account_email=f"{PROJECT_ID}@appspot.gserviceaccount.com"
         )
         return url
     except Exception as e:
-        st.sidebar.error(f"GCS Signing Error: {e}")
+        # If this still fails, check the terminal for the specific error string
+        print(f"❌ GCS Signing Error: {e}")
         return None
 
 # -- User Profile Handshake Initialisation ------------
