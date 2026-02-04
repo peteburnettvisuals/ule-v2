@@ -1,12 +1,6 @@
-streamlit
-google-cloud-storage
-google-auth
-google-generativeai
-lxml
-folium
-streamlit-folium
-google-cloud-firestore
-streamlit-authenticator==0.3.2
+streamlit>=1.35.0
+streamlit-authenticator==0.3.4
 streamlit-echarts
-google-cloud-aiplatform>=1.57.0
-firebase-admin>=6.5.0
+google-cloud-firestore
+google-cloud-storage
+google-cloud-aiplatform>=1.115.0
