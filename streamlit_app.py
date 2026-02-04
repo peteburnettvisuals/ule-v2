@@ -327,7 +327,7 @@ def load_audit_progress():
 
 # New Asset Resolver helper
 def resolve_asset_url(asset_id):
-    """Generates a secure Signed URL using IAM remote signing (Keyless)."""
+    """Generates a secure Signed URL using the Core-Master identity."""
     if not asset_id:
         return None
     
@@ -341,19 +341,19 @@ def resolve_asset_url(asset_id):
     blob = bucket.blob(filename)
     
     try:
-        # 1. GET THE TOKEN: We need a fresh access token from your ADC login
-        # This is the "Keyless" handshake that replaces the JSON key file.
+        # 1. Grab your live terminal credentials
         creds, _ = google.auth.default()
         auth_request = Request()
-        creds.refresh(auth_request) # This fetches a fresh 'pen' from Google
+        creds.refresh(auth_request) 
         
-        # 2. REMOTE SIGNING: Pass the service account AND the access token
+        # 2. Keyless Remote Signing
         url = blob.generate_signed_url(
             version="v4",
             expiration=timedelta(minutes=15),
             method="GET",
-            service_account_email=f"{PROJECT_ID}@appspot.gserviceaccount.com",
-            access_token=creds.token # THE MAGIC INGREDIENT
+            # THE FIX: Use the exact email from your IAM screenshot
+            service_account_email="core-master@otterspool-labs-core.iam.gserviceaccount.com",
+            access_token=creds.token
         )
         return url
     except Exception as e:
