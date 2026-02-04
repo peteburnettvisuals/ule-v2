@@ -325,35 +325,33 @@ def load_audit_progress():
 
 # New Asset Resolver helper
 def resolve_asset_url(asset_id):
-    """Generates a secure, temporary Signed URL with deep debugging."""
+    """Generates a secure Signed URL without requiring a local JSON key."""
     if not asset_id:
         return None
     
-    # 1. Clean the ID (The AI sometimes leaves a bracket or space)
     clean_id = asset_id.replace("[", "").replace("]", "").replace("AssetID:", "").strip()
-    
-    # 2. Lookup in Manifest
     asset_info = manifest['resource_library'].get(clean_id)
     
     if not asset_info:
-        # This tells us if the AI is hallucinating IDs not in your JSON
-        st.sidebar.error(f"Manifest Lookup Failed for: '{clean_id}'")
+        st.sidebar.error(f"Manifest Lookup Failed: '{clean_id}'")
         return None
     
     filename = asset_info['path']
-    blob_path = f"ule2/{filename}" 
+    blob_path = f"ule2/{filename}" # Ensure this matches your bucket structure
     blob = bucket.blob(blob_path)
     
     try:
-        # Attempt to sign the URL
+        # NEW: Keyless signing logic
+        # We tell the library to sign using our Team identity 
         url = blob.generate_signed_url(
             version="v4",
-            expiration=datetime.timedelta(minutes=15),
-            method="GET"
+            expiration=timedelta(minutes=15),
+            method="GET",
+            # This is the "Keyless" secret: sign as the project identity
+            service_account_email=f"{PROJECT_ID}@appspot.gserviceaccount.com"
         )
         return url
     except Exception as e:
-        # This tells us if it's a Permissions/IAM error
         st.sidebar.error(f"GCS Signing Error: {e}")
         return None
 
