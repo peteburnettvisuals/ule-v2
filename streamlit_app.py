@@ -19,9 +19,10 @@ from vertexai.generative_models import (
     GenerativeModel, 
     ChatSession, 
     Part, 
-    Content,
-    caching
+    Content
 )
+# Direct import to bypass the __init__ collision
+from vertexai.preview import caching
 
 # 4. The "Memory" (Firestore & Storage - Standard GCP)
 from google.cloud import firestore
