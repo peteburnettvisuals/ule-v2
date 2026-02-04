@@ -1,5 +1,5 @@
 streamlit>=1.35.0
-streamlit-authenticator==0.3.4
+streamlit-authenticator==0.3.3
 streamlit-echarts
 google-cloud-firestore
 google-cloud-storage
